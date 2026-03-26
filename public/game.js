@@ -19,261 +19,59 @@ const ctx = canvas.getContext('2d');
 // Disable smoothing for crisp pixel art look
 ctx.imageSmoothingEnabled = false;
 
-// --- Procedural Pixel Art Sprites ---
-const TILE_SIZE = 40;
-const sprites = {};
+// --- Tileset Asset Management ---
+const TILE_SIZE = 32;
+let tilesetLoaded = false;
+const tileset = new Image();
+tileset.src = 'tileset.png';
+tileset.onload = () => { tilesetLoaded = true; };
 
-function createPixelSprite(width, height, drawFn) {
-    const offCanvas = document.createElement('canvas');
-    offCanvas.width = width;
-    offCanvas.height = height;
-    const offCtx = offCanvas.getContext('2d');
-    offCtx.imageSmoothingEnabled = false;
-    drawFn(offCtx, width, height);
-    return offCanvas;
-}
+// Dictionary mapping logical tiles to (x, y) coordinates on the tileset (each cell is 32x32)
+// For ProjectUtumno: grass=25,18, tree=3,23, water=43,30, wall=15,2, floor=5,0, path=6,16
+const tCoords = {
+    grass: {x: 25, y: 18, w: 1, h: 1},
+    tree: {x: 3, y: 23, w: 1, h: 2}, // Tall tree
+    path: {x: 6, y: 16, w: 1, h: 1},
+    water1: {x: 43, y: 30, w: 1, h: 1},
+    water2: {x: 44, y: 30, w: 1, h: 1},
+    water3: {x: 45, y: 30, w: 1, h: 1},
+    bridge: {x: 18, y: 22, w: 1, h: 1}, // Wood bridge
+    house: {x: 13, y: 28, w: 3, h: 3}, // Large house
+    floor: {x: 5, y: 0, w: 1, h: 1},
+    wall: {x: 15, y: 2, w: 1, h: 1},
+    // Simple characters (row 13)
+    player_down_1: {x: 0, y: 13, w: 1, h: 1},
+    player_down_2: {x: 1, y: 13, w: 1, h: 1},
+    player_left_1: {x: 2, y: 13, w: 1, h: 1},
+    player_left_2: {x: 3, y: 13, w: 1, h: 1},
+    player_right_1: {x: 4, y: 13, w: 1, h: 1},
+    player_right_2: {x: 5, y: 13, w: 1, h: 1},
+    player_up_1: {x: 6, y: 13, w: 1, h: 1},
+    player_up_2: {x: 7, y: 13, w: 1, h: 1},
+    // Other players can use different rows for variety
+    other_down_1: {x: 8, y: 13, w: 1, h: 1},
+    other_down_2: {x: 9, y: 13, w: 1, h: 1},
+    other_left_1: {x: 10, y: 13, w: 1, h: 1},
+    other_left_2: {x: 11, y: 13, w: 1, h: 1},
+    other_right_1: {x: 12, y: 13, w: 1, h: 1},
+    other_right_2: {x: 13, y: 13, w: 1, h: 1},
+    other_up_1: {x: 14, y: 13, w: 1, h: 1},
+    other_up_2: {x: 15, y: 13, w: 1, h: 1},
+};
 
-// Generate Grass Tile
-sprites.grass = createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
-    c.fillStyle = '#78C850'; // Base grass green
-    c.fillRect(0, 0, w, h);
-    c.fillStyle = '#58A830'; // Darker green specs
-    for (let i = 0; i < 15; i++) {
-        c.fillRect(Math.floor(Math.random() * (w/4)) * 4, Math.floor(Math.random() * (h/4)) * 4, 4, 4);
-    }
-    c.fillStyle = '#98D870'; // Lighter green specs
-    for (let i = 0; i < 10; i++) {
-        c.fillRect(Math.floor(Math.random() * (w/4)) * 4, Math.floor(Math.random() * (h/4)) * 4, 4, 4);
-    }
-    // Random flowers
-    if (Math.random() > 0.8) {
-        c.fillStyle = '#FF69B4'; // Pink flower
-        c.fillRect(16, 16, 4, 4);
-        c.fillStyle = '#FFF';
-        c.fillRect(16, 12, 4, 4);
-        c.fillRect(16, 20, 4, 4);
-        c.fillRect(12, 16, 4, 4);
-        c.fillRect(20, 16, 4, 4);
-    }
-});
+function drawTile(name, destX, destY) {
+    if (!tilesetLoaded) return;
+    const t = tCoords[name];
+    if (!t) return;
 
-// Generate Tree Sprite
-sprites.tree = createPixelSprite(TILE_SIZE, TILE_SIZE * 1.5, (c, w, h) => {
-    // Shadow
-    c.fillStyle = 'rgba(0,0,0,0.3)';
-    c.beginPath();
-    c.ellipse(w/2, h - 8, 12, 6, 0, 0, Math.PI*2);
-    c.fill();
-    // Trunk
-    c.fillStyle = '#8B5A2B';
-    c.fillRect(16, 40, 8, 16);
-    c.fillStyle = '#6B3A0B';
-    c.fillRect(16, 40, 4, 16); // Trunk shadow
-    // Leaves (Layers of circles to look bushy like pokemon trees)
-    c.fillStyle = '#228B22';
-    c.beginPath(); c.arc(20, 20, 16, 0, Math.PI*2); c.fill();
-    c.beginPath(); c.arc(10, 30, 12, 0, Math.PI*2); c.fill();
-    c.beginPath(); c.arc(30, 30, 12, 0, Math.PI*2); c.fill();
-    c.beginPath(); c.arc(20, 36, 14, 0, Math.PI*2); c.fill();
+    // Tileset blocks are 32x32
+    const sourceX = t.x * 32;
+    const sourceY = t.y * 32;
+    const sourceW = t.w * 32;
+    const sourceH = t.h * 32;
 
-    // Highlights
-    c.fillStyle = '#32CD32';
-    c.beginPath(); c.arc(16, 16, 10, 0, Math.PI*2); c.fill();
-    c.beginPath(); c.arc(8, 26, 6, 0, Math.PI*2); c.fill();
-    c.beginPath(); c.arc(26, 26, 6, 0, Math.PI*2); c.fill();
-});
-
-// Generate Path Tile
-sprites.path = createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
-    c.fillStyle = '#F0E68C'; // Khaki / Sand color
-    c.fillRect(0, 0, w, h);
-    c.fillStyle = '#DDA0DD'; // Slight variation
-    for (let i = 0; i < 20; i++) {
-        if(Math.random() > 0.7) {
-            c.fillStyle = '#E6D870';
-            c.fillRect(Math.floor(Math.random() * (w/2)) * 2, Math.floor(Math.random() * (h/2)) * 2, 2, 2);
-        }
-    }
-});
-
-// Generate Water Animated Frames
-sprites.water = [];
-for (let frame = 0; frame < 3; frame++) {
-    sprites.water.push(createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
-        c.fillStyle = '#4169E1'; // Royal blue
-        c.fillRect(0, 0, w, h);
-        c.fillStyle = '#87CEFA'; // Light blue wave highlights
-        for (let y = 0; y < h; y += 8) {
-            for (let x = 0; x < w; x += 8) {
-                if ((x + y + frame * 8) % 16 === 0) {
-                    c.fillRect(x, y, 4, 2);
-                    c.fillRect(x + 4, y + 2, 4, 2);
-                }
-            }
-        }
-    }));
-}
-
-// Generate Bridge Tile
-sprites.bridge = createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
-    // Water underneath
-    c.fillStyle = '#4169E1';
-    c.fillRect(0, 0, w, h);
-    // Wood planks
-    c.fillStyle = '#8B4513';
-    c.fillRect(0, 8, w, 24);
-    c.fillStyle = '#A0522D'; // Wood lines
-    for (let i = 0; i < w; i += 8) {
-        c.fillRect(i, 8, 2, 24);
-    }
-    // Rails
-    c.fillStyle = '#5C4033';
-    c.fillRect(0, 4, w, 4);
-    c.fillRect(0, 32, w, 4);
-});
-
-// Generate Building/House Tile (Takes up 2x2 grid)
-sprites.house = createPixelSprite(TILE_SIZE * 2, TILE_SIZE * 2, (c, w, h) => {
-    // Base structure
-    c.fillStyle = '#D2B48C'; // Tan wall
-    c.fillRect(4, 32, w - 8, h - 32);
-    // Roof
-    c.fillStyle = '#CD5C5C'; // Indian Red roof
-    c.beginPath();
-    c.moveTo(0, 32);
-    c.lineTo(w/2, 4);
-    c.lineTo(w, 32);
-    c.fill();
-    // Door
-    c.fillStyle = '#8B4513';
-    c.fillRect(w/2 - 8, h - 20, 16, 20);
-    // Windows
-    c.fillStyle = '#87CEEB';
-    c.fillRect(12, 44, 16, 16);
-    c.fillRect(w - 28, 44, 16, 16);
-    // Outline / Detail
-    c.strokeStyle = '#333';
-    c.lineWidth = 2;
-    c.strokeRect(4, 32, w - 8, h - 32);
-    c.strokeRect(w/2 - 8, h - 20, 16, 20);
-});
-
-// Generate Stone Floor Tile
-sprites.stoneFloor = createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
-    c.fillStyle = '#696969';
-    c.fillRect(0, 0, w, h);
-    c.strokeStyle = '#444';
-    c.lineWidth = 1;
-    // Simple 2x2 brick pattern per tile
-    c.strokeRect(0, 0, w/2, h/2);
-    c.strokeRect(w/2, 0, w/2, h/2);
-    c.strokeRect(0, h/2, w/2, h/2);
-    c.strokeRect(w/2, h/2, w/2, h/2);
-});
-
-// Generate Dungeon Wall Tile
-sprites.wall = createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
-    c.fillStyle = '#2F4F4F'; // Dark slate
-    c.fillRect(0, 0, w, h);
-    c.fillStyle = '#1F3F3F';
-    c.fillRect(0, h - 8, w, 8); // Depth shadow
-    c.strokeStyle = '#000';
-    c.strokeRect(0,0,w,h);
-});
-
-// Generate Player Character Sprite Template (facing down)
-sprites.player = createPixelSprite(24, 32, (c, w, h) => {
-    // Shadow
-    c.fillStyle = 'rgba(0,0,0,0.3)';
-    c.beginPath(); c.ellipse(12, 28, 8, 4, 0, 0, Math.PI*2); c.fill();
-    // Body (Colored dynamically in draw, so we'll draw grayscale here and tint later,
-    // OR we draw the player directly in the render loop using this style)
-});
-
-function drawPlayerSprite(ctx, x, y, color, facing = 'down', walkFrame = 0) {
-    // Determine leg offset based on walk animation
-    const cycle = Math.floor(walkFrame) % 4;
-    let legOffset1 = 0;
-    let legOffset2 = 0;
-
-    // Simple bobbing and leg swing
-    if (cycle === 1) { legOffset1 = -2; legOffset2 = 2; }
-    if (cycle === 3) { legOffset1 = 2; legOffset2 = -2; }
-
-    const isWalking = cycle === 1 || cycle === 3;
-    const yBob = isWalking ? -1 : 0;
-
-    // Draw Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath(); ctx.ellipse(x, y + 14, 12, 6, 0, 0, Math.PI*2); ctx.fill();
-
-    y += yBob; // Apply bobbing to rest of sprite
-
-    // Legs
-    ctx.fillStyle = '#1e90ff'; // Blue jeans
-    if (facing === 'left' || facing === 'right') {
-        const dir = facing === 'left' ? -1 : 1;
-        ctx.fillRect(x - 4 + legOffset1*dir, y + 8, 4, 6);
-        ctx.fillRect(x + legOffset2*dir, y + 8, 4, 6);
-    } else {
-        ctx.fillRect(x - 6, y + 8 + legOffset1, 4, 6);
-        ctx.fillRect(x + 2, y + 8 + legOffset2, 4, 6);
-    }
-
-    // Backpack (draw behind if facing up)
-    if (facing === 'up') {
-        ctx.fillStyle = '#8B4513';
-        ctx.fillRect(x - 8, y - 2, 16, 10);
-    } else if (facing === 'left') {
-        ctx.fillStyle = '#8B4513';
-        ctx.fillRect(x + 4, y - 4, 8, 10);
-    } else if (facing === 'right') {
-        ctx.fillStyle = '#8B4513';
-        ctx.fillRect(x - 12, y - 4, 8, 10);
-    }
-
-    // Body (Rectangle with slightly rounded look)
-    ctx.fillStyle = color;
-    ctx.fillRect(x - 10, y - 8, 20, 16);
-
-    // Head (Circle)
-    ctx.fillStyle = '#FFE4C4'; // Skin tone
-    ctx.beginPath(); ctx.arc(x, y - 12, 10, 0, Math.PI*2); ctx.fill();
-
-    // Eyes (Only visible if facing down or sideways)
-    ctx.fillStyle = '#000';
-    if (facing === 'down') {
-        ctx.fillRect(x - 4, y - 14, 2, 2);
-        ctx.fillRect(x + 2, y - 14, 2, 2);
-    } else if (facing === 'left') {
-        ctx.fillRect(x - 6, y - 14, 2, 2);
-    } else if (facing === 'right') {
-        ctx.fillRect(x + 4, y - 14, 2, 2);
-    }
-
-    // Hat (Classic Red/White cap)
-    ctx.fillStyle = '#FF0000';
-    ctx.beginPath(); ctx.arc(x, y - 14, 10, Math.PI, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#FFF';
-
-    // Hat Brim based on direction
-    if (facing === 'down') {
-        ctx.fillRect(x - 10, y - 14, 20, 3);
-    } else if (facing === 'up') {
-        // No brim visible
-    } else if (facing === 'left') {
-        ctx.fillRect(x - 12, y - 14, 12, 3);
-    } else if (facing === 'right') {
-        ctx.fillRect(x, y - 14, 12, 3);
-    }
-
-    // Backpack (draw in front if facing down)
-    if (facing === 'down') {
-        // Just strap details maybe? Left it out for now to keep it simple, or draw small straps
-        ctx.fillStyle = '#A0522D';
-        ctx.fillRect(x - 8, y - 6, 2, 10);
-        ctx.fillRect(x + 6, y - 6, 2, 10);
-    }
+    // We scale our TILE_SIZE slightly up or down if needed, but keeping 1:1 is best for crispness
+    ctx.drawImage(tileset, sourceX, sourceY, sourceW, sourceH, destX, destY, sourceW, sourceH);
 }
 
 
@@ -281,8 +79,8 @@ function drawPlayerSprite(ctx, x, y, color, facing = 'down', walkFrame = 0) {
 let portals = [];
 let mapGrid = [];
 let mapObjects = [];
-const MAP_COLS = 20; // 800 / 40
-const MAP_ROWS = 15; // 600 / 40
+const MAP_COLS = 25; // 800 / 32
+const MAP_ROWS = 19; // 600 / 32
 
 // 0: grass, 1: path, 2: stoneFloor, 3: wall, 4: water, 5: bridge
 function clearMap() {
@@ -303,48 +101,45 @@ function buildCityMap() {
     }
 
     // Draw a path in the middle
-    for(let r=4; r<12; r++) {
-        mapGrid[r][9] = 1;
-        mapGrid[r][10] = 1;
+    for(let r=4; r<14; r++) {
+        mapGrid[r][11] = 1;
+        mapGrid[r][12] = 1;
     }
-    for(let c=5; c<15; c++) {
+    for(let c=5; c<20; c++) {
         mapGrid[8][c] = 1;
         mapGrid[9][c] = 1;
     }
 
     // Add a River
     for(let r=0; r<MAP_ROWS; r++) {
-        mapGrid[r][16] = 4; // Water
-        mapGrid[r][17] = 4; // Water
+        mapGrid[r][19] = 4; // Water
+        mapGrid[r][20] = 4; // Water
     }
 
     // Bridge over river
-    mapGrid[8][16] = 5;
-    mapGrid[8][17] = 5;
-    mapGrid[9][16] = 5;
-    mapGrid[9][17] = 5;
-    // Connect path to bridge
-    mapGrid[8][15] = 1;
-    mapGrid[9][15] = 1;
+    mapGrid[8][19] = 5;
+    mapGrid[8][20] = 5;
+    mapGrid[9][19] = 5;
+    mapGrid[9][20] = 5;
 
     // Add Houses
     mapObjects.push({ type: 'house', x: 2 * TILE_SIZE, y: 2 * TILE_SIZE });
-    mapObjects.push({ type: 'house', x: 12 * TILE_SIZE, y: 2 * TILE_SIZE });
-    mapObjects.push({ type: 'house', x: 2 * TILE_SIZE, y: 10 * TILE_SIZE });
+    mapObjects.push({ type: 'house', x: 14 * TILE_SIZE, y: 2 * TILE_SIZE });
+    mapObjects.push({ type: 'house', x: 2 * TILE_SIZE, y: 12 * TILE_SIZE });
 
     // Add Trees (Forest border)
     for(let c=0; c<MAP_COLS; c++) {
-        mapObjects.push({ type: 'tree', x: c * TILE_SIZE, y: -10 });
+        mapObjects.push({ type: 'tree', x: c * TILE_SIZE, y: -TILE_SIZE });
         mapObjects.push({ type: 'tree', x: c * TILE_SIZE, y: (MAP_ROWS - 1) * TILE_SIZE });
     }
     for(let r=1; r<MAP_ROWS-1; r++) {
-        mapObjects.push({ type: 'tree', x: 0, y: r * TILE_SIZE });
+        mapObjects.push({ type: 'tree', x: -TILE_SIZE/2, y: r * TILE_SIZE });
         mapObjects.push({ type: 'tree', x: (MAP_COLS - 1) * TILE_SIZE, y: r * TILE_SIZE });
     }
 
     // A few random trees
-    mapObjects.push({ type: 'tree', x: 5 * TILE_SIZE, y: 5 * TILE_SIZE });
-    mapObjects.push({ type: 'tree', x: 15 * TILE_SIZE, y: 12 * TILE_SIZE });
+    mapObjects.push({ type: 'tree', x: 6 * TILE_SIZE, y: 5 * TILE_SIZE });
+    mapObjects.push({ type: 'tree', x: 17 * TILE_SIZE, y: 13 * TILE_SIZE });
 
     // Portal to Dungeon
     createPortal(400, 100, 'dungeon', 'Dungeon Cave');
@@ -372,9 +167,9 @@ function buildDungeonMap() {
     }
 
     // Some inner walls
-    for(let r=4; r<10; r++) {
-        mapGrid[r][5] = 3;
-        mapGrid[r][14] = 3;
+    for(let r=4; r<12; r++) {
+        mapGrid[r][6] = 3;
+        mapGrid[r][18] = 3;
     }
 
     // Portal to City
@@ -387,7 +182,7 @@ function createPortal(x, y, targetMap, label) {
 
 function drawMap() {
     const time = Date.now();
-    const waterFrame = Math.floor(time / 400) % sprites.water.length;
+    const waterFrame = Math.floor(time / 400) % 3;
 
     // Draw Base Grid
     for(let r=0; r<MAP_ROWS; r++) {
@@ -396,24 +191,22 @@ function drawMap() {
             const px = c * TILE_SIZE;
             const py = r * TILE_SIZE;
 
-            if (tile === 0) ctx.drawImage(sprites.grass, px, py);
-            else if (tile === 1) ctx.drawImage(sprites.path, px, py);
-            else if (tile === 2) ctx.drawImage(sprites.stoneFloor, px, py);
-            else if (tile === 3) ctx.drawImage(sprites.wall, px, py);
-            else if (tile === 4) ctx.drawImage(sprites.water[waterFrame], px, py);
-            else if (tile === 5) ctx.drawImage(sprites.bridge, px, py);
+            if (tile === 0) drawTile('grass', px, py);
+            else if (tile === 1) drawTile('path', px, py);
+            else if (tile === 2) drawTile('floor', px, py);
+            else if (tile === 3) drawTile('wall', px, py);
+            else if (tile === 4) drawTile(`water${waterFrame + 1}`, px, py);
+            else if (tile === 5) drawTile('bridge', px, py);
         }
     }
 
     // Draw Map Objects (Trees, Houses)
-    // Sort objects by Y so things in front draw on top (fake depth)
     mapObjects.sort((a,b) => a.y - b.y);
     for (const obj of mapObjects) {
         if (obj.type === 'tree') {
-            // Adjust to draw sprite centered on its tile bottom
-            ctx.drawImage(sprites.tree, obj.x, obj.y - (TILE_SIZE * 0.5));
+            drawTile('tree', obj.x, obj.y - TILE_SIZE);
         } else if (obj.type === 'house') {
-            ctx.drawImage(sprites.house, obj.x, obj.y - TILE_SIZE);
+            drawTile('house', obj.x, obj.y - TILE_SIZE * 2);
         }
     }
 
@@ -438,6 +231,25 @@ function drawMap() {
         ctx.fillText(portal.label, portal.x, portal.y - 24);
     }
 }
+
+// Draw Player from Sprite Sheet
+function drawPlayerSprite(ctx, x, y, color, facing = 'down', walkFrame = 0, isLocalPlayer = false) {
+    const frameBase = Math.floor(walkFrame) % 2;
+    // Map internal directions to sprite names
+    // Choose prefix based on local player or network player for variation
+    const prefix = isLocalPlayer ? 'player' : 'other';
+    const spriteName = `${prefix}_${facing}_${frameBase + 1}`;
+
+    // Draw the actual image
+    drawTile(spriteName, x - TILE_SIZE/2, y - TILE_SIZE + 10);
+
+    // Fallback colored indicator circle if image isn't loaded yet
+    if (!tilesetLoaded) {
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI*2); ctx.fill();
+    }
+}
+
 
 // Game State
 let players = {};
@@ -629,7 +441,7 @@ function animate() {
     playersInMap.sort((a,b) => a.y - b.y);
 
     for (const p of playersInMap) {
-        drawPlayerSprite(ctx, p.x, p.y, p.color, p.facing || 'down', p.walkFrame || 0);
+        drawPlayerSprite(ctx, p.x, p.y, p.color, p.facing || 'down', p.walkFrame || 0, p.id === myId);
 
         // Name Tag
         ctx.fillStyle = 'white';
