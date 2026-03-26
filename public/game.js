@@ -91,19 +91,128 @@ function clearMap() {
     mapObjects = []; // Extra objects like trees/houses
 }
 
-function buildCityMap() {
-    clearMap();
-    MAP_COLS = 50;
-    MAP_ROWS = 50;
-
-    // Fill with grass
+function fillMapGrid(tileId) {
     for(let r=0; r<MAP_ROWS; r++) {
         let row = [];
         for(let c=0; c<MAP_COLS; c++) {
-            row.push(0); // grass
+            row.push(tileId);
         }
         mapGrid.push(row);
     }
+}
+
+function buildBorderTrees() {
+    for(let c=0; c<MAP_COLS; c++) {
+        mapObjects.push({ type: 'tree', x: c * TILE_SIZE, y: -TILE_SIZE });
+        mapObjects.push({ type: 'tree', x: c * TILE_SIZE, y: (MAP_ROWS - 1) * TILE_SIZE });
+    }
+    for(let r=1; r<MAP_ROWS-1; r++) {
+        mapObjects.push({ type: 'tree', x: -TILE_SIZE/2, y: r * TILE_SIZE });
+        mapObjects.push({ type: 'tree', x: (MAP_COLS - 1) * TILE_SIZE, y: r * TILE_SIZE });
+    }
+}
+
+function buildTown1() {
+    clearMap();
+    MAP_COLS = 25;
+    MAP_ROWS = 25;
+    fillMapGrid(0); // Grass
+
+    // Main path vertically through town
+    for (let r=0; r<MAP_ROWS; r++) {
+        mapGrid[r][11] = 1;
+        mapGrid[r][12] = 1;
+    }
+    // Path to houses
+    for (let c=5; c<20; c++) {
+        mapGrid[18][c] = 1;
+        mapGrid[19][c] = 1;
+        mapGrid[8][c] = 1;
+        mapGrid[9][c] = 1;
+    }
+
+    // A small pond in the bottom right corner
+    for(let r=20; r<24; r++) {
+        for(let c=18; c<24; c++) {
+            mapGrid[r][c] = 4; // Water
+        }
+    }
+
+    // Peaceful starter houses
+    mapObjects.push({ type: 'house', x: 5 * TILE_SIZE, y: 15 * TILE_SIZE }); // Player's House
+    mapObjects.push({ type: 'house', x: 16 * TILE_SIZE, y: 15 * TILE_SIZE }); // Rival's House
+    mapObjects.push({ type: 'house', x: 10 * TILE_SIZE, y: 5 * TILE_SIZE }); // Professor Lab (Top center)
+
+    // Signs
+    mapObjects.push({ type: 'sign', x: 7 * TILE_SIZE, y: 18 * TILE_SIZE, text: "Pallet Town: Shades of your journey await!" });
+    mapObjects.push({ type: 'sign', x: 12 * TILE_SIZE, y: 8 * TILE_SIZE, text: "Professor Oak's Research Lab" });
+
+    buildBorderTrees();
+
+    // Remove top tree border where the portal to Route 1 is
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.y === -TILE_SIZE && (o.x === 11*TILE_SIZE || o.x === 12*TILE_SIZE)));
+
+    // Portal North to Route 1
+    createPortal(12 * TILE_SIZE + 16, 10, 'route1', 'To Route 1');
+}
+
+function buildRoute1() {
+    clearMap();
+    MAP_COLS = 20;
+    MAP_ROWS = 45; // Long vertical route
+    fillMapGrid(0);
+
+    // Winding Path from bottom to top
+    for (let r=40; r<45; r++) { mapGrid[r][9] = 1; mapGrid[r][10] = 1; }
+    for (let c=5; c<=10; c++) { mapGrid[40][c] = 1; mapGrid[41][c] = 1; }
+    for (let r=25; r<=40; r++) { mapGrid[r][5] = 1; mapGrid[r][6] = 1; }
+    for (let c=5; c<=14; c++) { mapGrid[25][c] = 1; mapGrid[26][c] = 1; }
+    for (let r=10; r<=25; r++) { mapGrid[r][13] = 1; mapGrid[r][14] = 1; }
+    for (let c=9; c<=14; c++) { mapGrid[10][c] = 1; mapGrid[11][c] = 1; }
+    for (let r=0; r<=10; r++) { mapGrid[r][9] = 1; mapGrid[r][10] = 1; }
+
+    // Patches of tall grass filling the sides
+    for(let r=28; r<38; r++) { for(let c=9; c<18; c++) { mapGrid[r][c] = 6; } }
+    for(let r=12; r<22; r++) { for(let c=2; c<10; c++) { mapGrid[r][c] = 6; } }
+
+    // Ledges (using walls to simulate terrain barriers)
+    for(let c=1; c<5; c++) mapGrid[30][c] = 3;
+    for(let c=15; c<19; c++) mapGrid[15][c] = 3;
+
+    // Trainers
+    mapObjects.push({
+        type: 'trainer', id: 'route1_bugcatcher', name: 'Bug Catcher Tim',
+        x: 15 * TILE_SIZE, y: 35 * TILE_SIZE,
+        team: [generatePokemon(10, 3), generatePokemon(11, 4)]
+    });
+    mapObjects.push({
+        type: 'trainer', id: 'route1_youngster', name: 'Youngster Joey',
+        x: 4 * TILE_SIZE, y: 15 * TILE_SIZE,
+        team: [generatePokemon(19, 4), generatePokemon(19, 5)]
+    });
+    mapObjects.push({
+        type: 'trainer', id: 'route1_lass', name: 'Lass Sally',
+        x: 10 * TILE_SIZE, y: 22 * TILE_SIZE,
+        team: [generatePokemon(16, 5), generatePokemon(43, 4)] // Pidgey, Oddish
+    });
+
+    mapObjects.push({ type: 'sign', x: 12 * TILE_SIZE, y: 42 * TILE_SIZE, text: "Route 1 - Beware of wild Pokemon in the tall grass!" });
+
+    buildBorderTrees();
+    // Open path South to Town 1
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.y === (MAP_ROWS-1)*TILE_SIZE && (o.x === 9*TILE_SIZE || o.x === 10*TILE_SIZE)));
+    // Open path North to Town 2
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.y === -TILE_SIZE && (o.x === 9*TILE_SIZE || o.x === 10*TILE_SIZE)));
+
+    createPortal(10 * TILE_SIZE + 16, MAP_ROWS * TILE_SIZE - 20, 'town1', 'To Pallet Town');
+    createPortal(10 * TILE_SIZE + 16, 10, 'town2', 'To Viridian City');
+}
+
+function buildTown2() {
+    clearMap();
+    MAP_COLS = 50;
+    MAP_ROWS = 50;
+    fillMapGrid(0); // Grass
 
     // Add Multiple Tall Grass patches
     for(let r=5; r<15; r++) {
@@ -147,21 +256,6 @@ function buildCityMap() {
     // Add Shop (Pokemart) centrally located
     mapObjects.push({ type: 'house', x: 16 * TILE_SIZE, y: 22 * TILE_SIZE, isShop: true });
 
-    // Add Trees (Forest border for new large size)
-    for(let c=0; c<MAP_COLS; c++) {
-        mapObjects.push({ type: 'tree', x: c * TILE_SIZE, y: -TILE_SIZE });
-        mapObjects.push({ type: 'tree', x: c * TILE_SIZE, y: (MAP_ROWS - 1) * TILE_SIZE });
-    }
-    for(let r=1; r<MAP_ROWS-1; r++) {
-        mapObjects.push({ type: 'tree', x: -TILE_SIZE/2, y: r * TILE_SIZE });
-        mapObjects.push({ type: 'tree', x: (MAP_COLS - 1) * TILE_SIZE, y: r * TILE_SIZE });
-    }
-
-    // A few random trees for flavor
-    mapObjects.push({ type: 'tree', x: 8 * TILE_SIZE, y: 12 * TILE_SIZE });
-    mapObjects.push({ type: 'tree', x: 35 * TILE_SIZE, y: 28 * TILE_SIZE });
-    mapObjects.push({ type: 'tree', x: 42 * TILE_SIZE, y: 15 * TILE_SIZE });
-
     // Trainers
     mapObjects.push({
         type: 'trainer', id: 'trainer_bugcatcher', name: 'Bug Catcher Tim',
@@ -174,10 +268,123 @@ function buildCityMap() {
         team: [generatePokemon(19, 4), generatePokemon(19, 5)]
     });
 
-    // Portals
-    createPortal(16 * TILE_SIZE, 12 * TILE_SIZE, 'rock_dungeon', 'Mt. Moon Cave');
-    createPortal(40 * TILE_SIZE, 40 * TILE_SIZE, 'water_dungeon', 'Seafoam Cave');
-    createPortal(40 * TILE_SIZE, 26 * TILE_SIZE, 'gym', 'Pewter Gym');
+    buildBorderTrees();
+
+    // Open path South to Route 1
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.y === (MAP_ROWS-1)*TILE_SIZE && (o.x === 15*TILE_SIZE || o.x === 16*TILE_SIZE)));
+
+    // Open path East to Route 2
+    for(let r=25; r<27; r++) { mapGrid[r][MAP_COLS-1] = 1; }
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === (MAP_COLS-1)*TILE_SIZE && o.y >= 25*TILE_SIZE && o.y <= 27*TILE_SIZE));
+
+    createPortal(16 * TILE_SIZE + 16, MAP_ROWS * TILE_SIZE - 20, 'route1', 'To Route 1');
+    createPortal(MAP_COLS * TILE_SIZE - 20, 26 * TILE_SIZE + 16, 'route2', 'To Route 2');
+
+    // Dungeons and Gym entrances scattered around the city edges
+    createPortal(50, 20 * TILE_SIZE + 16, 'water_dungeon', 'Seafoam Cave');
+    createPortal(20 * TILE_SIZE + 16, 50, 'rock_dungeon', 'Mt. Moon Cave');
+    createPortal(MAP_COLS * TILE_SIZE - 200, 10 * TILE_SIZE + 16, 'gym', 'Pewter Gym');
+}
+
+function buildRoute2() {
+    clearMap();
+    MAP_COLS = 60;
+    MAP_ROWS = 25; // Long horizontal route
+    fillMapGrid(0);
+
+    // Winding Path from left to right
+    for (let c=0; c<15; c++) { mapGrid[6][c] = 1; mapGrid[7][c] = 1; }
+    for (let r=6; r<20; r++) { mapGrid[r][14] = 1; mapGrid[r][15] = 1; }
+    for (let c=14; c<35; c++) { mapGrid[19][c] = 1; mapGrid[20][c] = 1; }
+    for (let r=12; r<20; r++) { mapGrid[r][34] = 1; mapGrid[r][35] = 1; }
+    for (let c=34; c<MAP_COLS; c++) { mapGrid[12][c] = 1; mapGrid[13][c] = 1; }
+
+    // Enormous patches of tall grass
+    for(let r=2; r<5; r++) { for(let c=5; c<14; c++) { mapGrid[r][c] = 6; } }
+    for(let r=14; r<19; r++) { for(let c=20; c<30; c++) { mapGrid[r][c] = 6; } }
+    for(let r=15; r<22; r++) { for(let c=40; c<55; c++) { mapGrid[r][c] = 6; } }
+
+    // Trainers
+    mapObjects.push({
+        type: 'trainer', id: 'route2_lass', name: 'Lass Mia',
+        x: 20 * TILE_SIZE, y: 15 * TILE_SIZE,
+        team: [generatePokemon(43, 6), generatePokemon(43, 7)] // Oddish
+    });
+    mapObjects.push({
+        type: 'trainer', id: 'route2_hiker', name: 'Hiker Bob',
+        x: 40 * TILE_SIZE, y: 10 * TILE_SIZE,
+        team: [generatePokemon(74, 8), generatePokemon(66, 8)] // Geodude, Machop
+    });
+
+    mapObjects.push({ type: 'sign', x: 25 * TILE_SIZE, y: 22 * TILE_SIZE, text: "Route 2 - The long road East to Cerulean City." });
+
+    buildBorderTrees();
+
+    // Open path West to Town 2
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === -TILE_SIZE/2 && o.y >= 5*TILE_SIZE && o.y <= 7*TILE_SIZE));
+    // Open path East to Town 3
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === (MAP_COLS-1)*TILE_SIZE && o.y >= 12*TILE_SIZE && o.y <= 14*TILE_SIZE));
+
+    createPortal(20, 6 * TILE_SIZE + 16, 'town2', 'To Viridian City');
+    createPortal(MAP_COLS * TILE_SIZE - 20, 13 * TILE_SIZE, 'town3', 'To Cerulean City');
+}
+
+function buildTown3() {
+    clearMap();
+    MAP_COLS = 60;
+    MAP_ROWS = 60;
+    fillMapGrid(0);
+
+    // Giant central lake
+    for(let r=15; r<45; r++) {
+        for(let c=15; c<45; c++) {
+            // Rough circle formula to make a round lake
+            const dc = c - 30;
+            const dr = r - 30;
+            if (dc*dc + dr*dr < 225) { // Radius 15
+                mapGrid[r][c] = 4; // Water
+            }
+        }
+    }
+
+    // Main paths wrapping around the lake
+    for(let r=0; r<MAP_ROWS; r++) { mapGrid[r][10] = 1; mapGrid[r][11] = 1; } // Left vertical
+    for(let r=0; r<MAP_ROWS; r++) { mapGrid[r][50] = 1; mapGrid[r][51] = 1; } // Right vertical
+    for(let c=0; c<MAP_COLS; c++) { mapGrid[10][c] = 1; mapGrid[11][c] = 1; } // Top horizontal
+    for(let c=0; c<MAP_COLS; c++) { mapGrid[50][c] = 1; mapGrid[51][c] = 1; } // Bottom horizontal
+
+    // Bridge over the top of the lake
+    for(let c=20; c<40; c++) {
+        if(mapGrid[15][c] === 4) { mapGrid[15][c] = 5; mapGrid[16][c] = 5; }
+    }
+    // Connect bridge to paths
+    for(let r=12; r<15; r++) { mapGrid[r][30] = 1; mapGrid[r][31] = 1; }
+
+    // Buildings & Shops
+    mapObjects.push({ type: 'house', x: 5 * TILE_SIZE, y: 5 * TILE_SIZE });
+    mapObjects.push({ type: 'house', x: 15 * TILE_SIZE, y: 5 * TILE_SIZE });
+    mapObjects.push({ type: 'house', x: 40 * TILE_SIZE, y: 5 * TILE_SIZE });
+    mapObjects.push({ type: 'house', x: 5 * TILE_SIZE, y: 40 * TILE_SIZE });
+
+    // Huge Pokemart
+    mapObjects.push({ type: 'house', x: 45 * TILE_SIZE, y: 40 * TILE_SIZE, isShop: true });
+
+    // Signs
+    mapObjects.push({ type: 'sign', x: 30 * TILE_SIZE, y: 12 * TILE_SIZE, text: "Cerulean City: A Floral City Surrounded by Water" });
+    mapObjects.push({ type: 'sign', x: 48 * TILE_SIZE, y: 45 * TILE_SIZE, text: "Cerulean Dept. Store" });
+    mapObjects.push({ type: 'sign', x: 12 * TILE_SIZE, y: 48 * TILE_SIZE, text: "Cerulean Gym - Leader: Misty" });
+
+    // Gym Entrance (Looks like a normal house here, but goes to gym2)
+    mapObjects.push({ type: 'house', x: 10 * TILE_SIZE, y: 45 * TILE_SIZE });
+    createPortal(11 * TILE_SIZE, 48 * TILE_SIZE, 'gym2', 'Cerulean Gym');
+
+    buildBorderTrees();
+
+    // Open path West to Route 2
+    for(let r=12; r<15; r++) mapGrid[r][0] = 1; // Connect path explicitly
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === -TILE_SIZE/2 && o.y >= 12*TILE_SIZE && o.y <= 14*TILE_SIZE));
+
+    createPortal(20, 13 * TILE_SIZE + 16, 'route2', 'To Route 2');
 }
 
 function buildGymMap() {
@@ -218,11 +425,70 @@ function buildGymMap() {
     mapObjects.push({
         type: 'trainer', id: 'gym_boss_brock', name: 'Gym Leader Brock',
         x: 12 * TILE_SIZE, y: 4 * TILE_SIZE,
-        badge: true,
+        badge: true, badgeName: 'BOULDER BADGE',
         team: [generatePokemon(74, 12), generatePokemon(75, 14)] // Geodude, Graveler
     });
 
-    createPortal(400, 500, 'city', 'Exit');
+    createPortal(400, 500, 'town2', 'Exit');
+}
+
+function buildGym2() {
+    clearMap();
+    MAP_COLS = 25;
+    MAP_ROWS = 25;
+    // Fill with water
+    for(let r=0; r<MAP_ROWS; r++) {
+        let row = [];
+        for(let c=0; c<MAP_COLS; c++) {
+            row.push(4); // water
+        }
+        mapGrid.push(row);
+    }
+
+    // Gym Path (Bridge)
+    for(let r=3; r<MAP_ROWS; r++) {
+        mapGrid[r][11] = 5;
+        mapGrid[r][12] = 5;
+        mapGrid[r][13] = 5;
+    }
+
+    // Boss Platform
+    for(let r=1; r<5; r++) {
+        for(let c=10; c<15; c++) {
+            mapGrid[r][c] = 2; // Stone floor
+        }
+    }
+
+    // Add Walls (Border)
+    for(let c=0; c<MAP_COLS; c++) {
+        mapGrid[0][c] = 3;
+        mapGrid[MAP_ROWS - 1][c] = 3;
+    }
+    for(let r=0; r<MAP_ROWS; r++) {
+        mapGrid[r][0] = 3;
+        mapGrid[r][MAP_COLS - 1] = 3;
+    }
+
+    // Add Gym Trainers
+    mapObjects.push({
+        type: 'trainer', id: 'gym_trainer_swimmer1', name: 'Swimmer Shelly',
+        x: 9 * TILE_SIZE, y: 15 * TILE_SIZE,
+        team: [generatePokemon(72, 16), generatePokemon(72, 16)] // Tentacool
+    });
+    mapObjects.push({
+        type: 'trainer', id: 'gym_trainer_swimmer2', name: 'Swimmer Luis',
+        x: 14 * TILE_SIZE, y: 10 * TILE_SIZE,
+        team: [generatePokemon(54, 17)] // Psyduck
+    });
+
+    mapObjects.push({
+        type: 'trainer', id: 'gym_boss_misty', name: 'Gym Leader Misty',
+        x: 12 * TILE_SIZE, y: 3 * TILE_SIZE,
+        badge: true, badgeName: 'CASCADE BADGE',
+        team: [generatePokemon(73, 21)] // Tentacruel
+    });
+
+    createPortal(400, 750, 'town3', 'Exit');
 }
 
 function buildRockDungeon() {
@@ -265,7 +531,7 @@ function buildRockDungeon() {
         team: [generatePokemon(74, 8), generatePokemon(41, 7)] // Geodude, Zubat
     });
 
-    createPortal(400, 800, 'city', 'Exit to City');
+    createPortal(400, 800, 'town2', 'Exit to City');
 }
 
 function buildWaterDungeon() {
@@ -303,7 +569,7 @@ function buildWaterDungeon() {
         team: [generatePokemon(72, 10), generatePokemon(54, 9)] // Tentacool, Psyduck
     });
 
-    createPortal(450, 850, 'city', 'Exit to City');
+    createPortal(450, 850, 'town3', 'Exit to City');
 }
 
 function createPortal(x, y, targetMap, label) {
@@ -690,7 +956,7 @@ function checkBattleContinue() {
                     myBadges++;
                     document.getElementById('badgeDisplay').innerText = myBadges;
                     setTimeout(() => {
-                        battleMessage.innerText = `You received the BOULDER BADGE!`;
+                        battleMessage.innerText = `You received the ${opponentTrainer.badgeName}!`;
                         setTimeout(endBattle, 2000);
                     }, 1500);
                 } else {
@@ -854,8 +1120,13 @@ socket.on('playerStatsUpdate', (statsInfo) => {
 });
 
 function loadMap(mapName) {
-    if (mapName === 'city') buildCityMap();
+    if (mapName === 'town1') buildTown1();
+    else if (mapName === 'route1') buildRoute1();
+    else if (mapName === 'town2') buildTown2();
+    else if (mapName === 'route2') buildRoute2();
+    else if (mapName === 'town3') buildTown3();
     else if (mapName === 'gym') buildGymMap();
+    else if (mapName === 'gym2') buildGym2();
     else if (mapName === 'rock_dungeon') buildRockDungeon();
     else if (mapName === 'water_dungeon') buildWaterDungeon();
 }
