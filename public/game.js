@@ -30,6 +30,7 @@ tileset.onload = () => { tilesetLoaded = true; };
 // For ProjectUtumno: grass=25,18, tree=3,23, water=43,30, wall=15,2, floor=5,0, path=6,16
 const tCoords = {
     grass: {x: 25, y: 18, w: 1, h: 1},
+    tallGrass: {x: 24, y: 17, w: 1, h: 1}, // Added tall grass for encounters
     tree: {x: 3, y: 23, w: 1, h: 2}, // Tall tree
     path: {x: 6, y: 16, w: 1, h: 1},
     water1: {x: 43, y: 30, w: 1, h: 1},
@@ -82,7 +83,7 @@ let mapObjects = [];
 const MAP_COLS = 25; // 800 / 32
 const MAP_ROWS = 19; // 600 / 32
 
-// 0: grass, 1: path, 2: stoneFloor, 3: wall, 4: water, 5: bridge
+// 0: grass, 1: path, 2: stoneFloor, 3: wall, 4: water, 5: bridge, 6: tallGrass
 function clearMap() {
     mapGrid = [];
     portals = [];
@@ -98,6 +99,13 @@ function buildCityMap() {
             row.push(0); // grass
         }
         mapGrid.push(row);
+    }
+
+    // Add Tall Grass patch for encounters
+    for(let r=2; r<7; r++) {
+        for(let c=2; c<8; c++) {
+            mapGrid[r][c] = 6; // tallGrass
+        }
     }
 
     // Draw a path in the middle
@@ -197,6 +205,7 @@ function drawMap() {
             else if (tile === 3) drawTile('wall', px, py);
             else if (tile === 4) drawTile(`water${waterFrame + 1}`, px, py);
             else if (tile === 5) drawTile('bridge', px, py);
+            else if (tile === 6) drawTile('tallGrass', px, py);
         }
     }
 
@@ -256,8 +265,187 @@ let players = {};
 let myId = null;
 let currentRoomId = null;
 let currentMap = null;
+let inBattle = false;
+let myTeam = [];
+let wildPokemon = null;
+let activePokemon = null;
+let turnActionLocked = false;
 
 const SPEED = 0.2;
+
+// --- Battle System ---
+const battleContainer = document.getElementById('battle-container');
+const battleMessage = document.getElementById('battle-message');
+const wildSprite = document.getElementById('wild-sprite');
+const playerSprite = document.getElementById('player-sprite');
+const wildNameLvl = document.getElementById('wild-name-level');
+const playerNameLvl = document.getElementById('player-name-level');
+const wildHpFill = document.getElementById('wild-hp-fill');
+const playerHpFill = document.getElementById('player-hp-fill');
+
+function startBattle() {
+    inBattle = true;
+    turnActionLocked = false;
+
+    // Generate Wild Pokemon (Level 2 to 5)
+    const speciesIds = [1, 4, 7, 16, 19]; // Random early pokemon
+    const wildId = speciesIds[Math.floor(Math.random() * speciesIds.length)];
+    const wildLvl = Math.floor(Math.random() * 4) + 2;
+    wildPokemon = generatePokemon(wildId, wildLvl);
+
+    // Ensure player has a starter
+    if (myTeam.length === 0) {
+        const starters = [1, 4, 7];
+        const starterId = starters[Math.floor(Math.random() * starters.length)];
+        myTeam.push(generatePokemon(starterId, 5));
+    }
+    activePokemon = myTeam[0];
+
+    updateBattleUI();
+    battleContainer.style.display = 'flex';
+    battleMessage.innerText = `A wild ${wildPokemon.name} appeared!`;
+}
+
+function updateBattleUI() {
+    wildSprite.src = POKEDEX[wildPokemon.speciesId].front;
+    playerSprite.src = POKEDEX[activePokemon.speciesId].back;
+
+    wildNameLvl.innerText = `${wildPokemon.name} Lv.${wildPokemon.level}`;
+    playerNameLvl.innerText = `${activePokemon.name} Lv.${activePokemon.level}`;
+
+    wildHpFill.style.width = `${Math.max(0, (wildPokemon.hp / wildPokemon.maxHp) * 100)}%`;
+    playerHpFill.style.width = `${Math.max(0, (activePokemon.hp / activePokemon.maxHp) * 100)}%`;
+
+    // Color logic
+    wildHpFill.style.backgroundColor = wildPokemon.hp / wildPokemon.maxHp < 0.2 ? 'red' : (wildPokemon.hp / wildPokemon.maxHp < 0.5 ? 'orange' : '#00ff00');
+    playerHpFill.style.backgroundColor = activePokemon.hp / activePokemon.maxHp < 0.2 ? 'red' : (activePokemon.hp / activePokemon.maxHp < 0.5 ? 'orange' : '#00ff00');
+}
+
+function endBattle() {
+    setTimeout(() => {
+        inBattle = false;
+        battleContainer.style.display = 'none';
+        wildPokemon = null;
+    }, 2000);
+}
+
+function processTurn(action) {
+    if (!inBattle || !wildPokemon || activePokemon.hp <= 0 || turnActionLocked) return;
+
+    turnActionLocked = true;
+
+    if (action === 'run') {
+        battleMessage.innerText = "Got away safely!";
+        endBattle();
+        return;
+    }
+
+    if (action === 'catch') {
+        const catchRate = 1 - (wildPokemon.hp / wildPokemon.maxHp);
+        if (Math.random() < catchRate + 0.1) {
+            battleMessage.innerText = `Gotcha! ${wildPokemon.name} was caught!`;
+            myTeam.push(wildPokemon);
+            endBattle();
+        } else {
+            battleMessage.innerText = `Oh no! ${wildPokemon.name} broke free!`;
+            wildAttack();
+        }
+        return;
+    }
+
+    if (action === 'fight') {
+        // Player attacks
+        const moveData = MOVES[activePokemon.move];
+        const multiplier = getMultiplier(moveData.type, POKEDEX[wildPokemon.speciesId].type);
+        const damage = Math.max(1, Math.floor((((2 * activePokemon.level / 5 + 2) * moveData.power * (activePokemon.atk / wildPokemon.def)) / 50 + 2) * multiplier));
+
+        wildPokemon.hp -= damage;
+        let effMsg = multiplier > 1 ? " It's super effective!" : (multiplier < 1 ? " It's not very effective..." : "");
+        battleMessage.innerText = `${activePokemon.name} used ${activePokemon.move}!${effMsg}`;
+
+        updateBattleUI();
+
+        if (wildPokemon.hp <= 0) {
+            wildPokemon.hp = 0;
+            battleMessage.innerText = `Wild ${wildPokemon.name} fainted!`;
+            setTimeout(awardExp, 1000);
+            return;
+        }
+
+        setTimeout(wildAttack, 1500);
+    }
+}
+
+function wildAttack() {
+    if (!inBattle || wildPokemon.hp <= 0) return;
+
+    const moveData = MOVES[wildPokemon.move];
+    const multiplier = getMultiplier(moveData.type, POKEDEX[activePokemon.speciesId].type);
+    const damage = Math.max(1, Math.floor((((2 * wildPokemon.level / 5 + 2) * moveData.power * (wildPokemon.atk / activePokemon.def)) / 50 + 2) * multiplier));
+
+    activePokemon.hp -= damage;
+    let effMsg = multiplier > 1 ? " It's super effective!" : (multiplier < 1 ? " It's not very effective..." : "");
+    battleMessage.innerText = `Wild ${wildPokemon.name} used ${wildPokemon.move}!${effMsg}`;
+
+    updateBattleUI();
+
+    if (activePokemon.hp <= 0) {
+        activePokemon.hp = 0;
+        battleMessage.innerText = `${activePokemon.name} fainted! You blacked out!`;
+        // Send player back to start and heal
+        players[myId].x = 400;
+        players[myId].y = 400;
+        activePokemon.hp = activePokemon.maxHp;
+        socket.emit('changeMap', { map: 'city', x: 400, y: 400 });
+        endBattle();
+    } else {
+        turnActionLocked = false; // Player can act again
+    }
+}
+
+function awardExp() {
+    const expGain = wildPokemon.level * 10;
+    activePokemon.exp += expGain;
+    battleMessage.innerText = `${activePokemon.name} gained ${expGain} EXP!`;
+
+    const expNeeded = activePokemon.level * 20;
+    if (activePokemon.exp >= expNeeded) {
+        activePokemon.level++;
+        activePokemon.exp -= expNeeded;
+        // Basic stat scaling
+        activePokemon.maxHp += 5;
+        activePokemon.hp += 5;
+        activePokemon.atk += 2;
+        activePokemon.def += 2;
+
+        setTimeout(() => {
+            battleMessage.innerText = `${activePokemon.name} grew to level ${activePokemon.level}!`;
+
+            // Check Evolution
+            const dexData = POKEDEX[activePokemon.speciesId];
+            if (dexData.evolvesAt && activePokemon.level >= dexData.evolvesAt) {
+                setTimeout(() => {
+                    const evoName = POKEDEX[dexData.evolvesTo].name;
+                    battleMessage.innerText = `What? ${activePokemon.name} is evolving! ... It became ${evoName}!`;
+                    activePokemon.speciesId = dexData.evolvesTo;
+                    activePokemon.name = evoName;
+                    activePokemon.move = POKEDEX[dexData.evolvesTo].move;
+                    updateBattleUI();
+                    endBattle();
+                }, 1500);
+            } else {
+                endBattle();
+            }
+        }, 1500);
+    } else {
+        endBattle();
+    }
+}
+
+// Attach Battle Listeners
+document.getElementById('btn-fight').addEventListener('click', () => processTurn('fight'));
+document.getElementById('btn-catch').addEventListener('click', () => processTurn('catch'));
+document.getElementById('btn-run').addEventListener('click', () => processTurn('run'));
 
 // Input
 const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowLeft: false, ArrowDown: false, ArrowRight: false };
@@ -390,44 +578,56 @@ function animate() {
     const oldX = me.x;
     const oldY = me.y;
 
-    if (keys.w || keys.ArrowUp) { me.y -= SPEED * 10; me.facing = 'up'; }
-    if (keys.s || keys.ArrowDown) { me.y += SPEED * 10; me.facing = 'down'; }
-    if (keys.a || keys.ArrowLeft) { me.x -= SPEED * 10; me.facing = 'left'; }
-    if (keys.d || keys.ArrowRight) { me.x += SPEED * 10; me.facing = 'right'; }
+    if (!inBattle) {
+        if (keys.w || keys.ArrowUp) { me.y -= SPEED * 10; me.facing = 'up'; }
+        if (keys.s || keys.ArrowDown) { me.y += SPEED * 10; me.facing = 'down'; }
+        if (keys.a || keys.ArrowLeft) { me.x -= SPEED * 10; me.facing = 'left'; }
+        if (keys.d || keys.ArrowRight) { me.x += SPEED * 10; me.facing = 'right'; }
 
-    // Boundary roughly matching our 3D plane scale
-    if (me.x < 0) me.x = 0;
-    if (me.x > 800) me.x = 800;
-    if (me.y < 0) me.y = 0;
-    if (me.y > 600) me.y = 600;
+        // Boundary roughly matching our 3D plane scale
+        if (me.x < 0) me.x = 0;
+        if (me.x > 800) me.x = 800;
+        if (me.y < 0) me.y = 0;
+        if (me.y > 600) me.y = 600;
 
-    if (me.x !== oldX || me.y !== oldY) {
-        me.walkFrame = (me.walkFrame || 0) + 0.2;
-        socket.emit('playerMovement', { x: me.x, y: me.y });
+        if (me.x !== oldX || me.y !== oldY) {
+            me.walkFrame = (me.walkFrame || 0) + 0.2;
+            socket.emit('playerMovement', { x: me.x, y: me.y });
 
-        // Portal Collision Check
-        for (const portal of portals) {
-            const dx = me.x - portal.x;
-            const dy = me.y - portal.y;
-            const distSq = dx * dx + dy * dy;
-            // The portal radius is 20, player is 20x20
-            if (distSq < (portal.radius + 10) * (portal.radius + 10)) {
-                // Teleport!
-                currentMap = portal.targetMap;
-
-                // Set to default spawn depending on map
-                if (currentMap === 'city') {
-                    me.x = 400; // Middle
-                    me.y = 100; // Near edge
-                } else if (currentMap === 'dungeon') {
-                    me.x = 400;
-                    me.y = 400;
+            // Encounter check in tall grass
+            const gridX = Math.floor(me.x / TILE_SIZE);
+            const gridY = Math.floor(me.y / TILE_SIZE);
+            if (mapGrid[gridY] && mapGrid[gridY][gridX] === 6) {
+                // Moving in tall grass, trigger random battle chance
+                if (Math.random() < 0.02) {
+                    startBattle();
                 }
+            }
 
-                loadMap(currentMap);
+            // Portal Collision Check
+            for (const portal of portals) {
+                const dx = me.x - portal.x;
+                const dy = me.y - portal.y;
+                const distSq = dx * dx + dy * dy;
+                // The portal radius is 20, player is 20x20
+                if (distSq < (portal.radius + 10) * (portal.radius + 10)) {
+                    // Teleport!
+                    currentMap = portal.targetMap;
 
-                socket.emit('changeMap', { map: currentMap, x: me.x, y: me.y });
-                break; // Only trigger one portal
+                    // Set to default spawn depending on map
+                    if (currentMap === 'city') {
+                        me.x = 400; // Middle
+                        me.y = 100; // Near edge
+                    } else if (currentMap === 'dungeon') {
+                        me.x = 400;
+                        me.y = 400;
+                    }
+
+                    loadMap(currentMap);
+
+                    socket.emit('changeMap', { map: currentMap, x: me.x, y: me.y });
+                    break; // Only trigger one portal
+                }
             }
         }
     }

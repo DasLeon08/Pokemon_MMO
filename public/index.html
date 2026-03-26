@@ -26,9 +26,34 @@
             <button id="gainExpBtn">Gain EXP!</button>
         </div>
         <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="battle-container" style="display: none;">
+            <div id="battle-scene">
+                <div class="health-box" id="wild-health">
+                    <div id="wild-name-level">Wild Pokemon Lv.5</div>
+                    <div class="hp-bar"><div class="hp-fill" id="wild-hp-fill"></div></div>
+                </div>
+                <img id="wild-sprite" src="" alt="Wild Pokemon">
+
+                <img id="player-sprite" src="" alt="Your Pokemon">
+                <div class="health-box" id="player-health">
+                    <div id="player-name-level">Your Pokemon Lv.5</div>
+                    <div class="hp-bar"><div class="hp-fill" id="player-hp-fill"></div></div>
+                </div>
+            </div>
+            <div id="battle-menu">
+                <div id="battle-message">A wild Pokemon appeared!</div>
+                <div id="battle-actions">
+                    <button id="btn-fight">Fight</button>
+                    <button id="btn-catch">Catch</button>
+                    <button id="btn-run">Run</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
+    <script src="pokemon.js"></script>
     <script src="game.js"></script>
 </body>
 </html>

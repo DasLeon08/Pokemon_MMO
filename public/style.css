@@ -97,3 +97,127 @@ canvas {
 #gainExpBtn:hover {
     background-color: #da190b;
 }
+
+#battle-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 800px;
+    height: 600px;
+    background-color: #f0f0f0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    font-family: 'Press Start 2P', monospace, sans-serif;
+}
+
+#battle-scene {
+    position: relative;
+    flex: 1;
+    background-color: #e0f8d0; /* light grass green */
+    border-bottom: 4px solid #333;
+}
+
+#wild-sprite {
+    position: absolute;
+    top: 50px;
+    right: 150px;
+    width: 150px;
+    height: 150px;
+    image-rendering: pixelated;
+}
+
+#player-sprite {
+    position: absolute;
+    bottom: 50px;
+    left: 100px;
+    width: 150px;
+    height: 150px;
+    image-rendering: pixelated;
+}
+
+.health-box {
+    position: absolute;
+    background: #ffffe0;
+    border: 4px solid #333;
+    border-radius: 8px;
+    padding: 10px;
+    width: 250px;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+}
+
+#wild-health {
+    top: 50px;
+    left: 50px;
+}
+
+#player-health {
+    bottom: 50px;
+    right: 50px;
+}
+
+.health-box > div:first-child {
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.hp-bar {
+    width: 100%;
+    height: 12px;
+    background-color: #555;
+    border: 2px solid #222;
+    border-radius: 4px;
+}
+
+.hp-fill {
+    height: 100%;
+    background-color: #00ff00;
+    width: 100%;
+    transition: width 0.3s ease;
+}
+
+#battle-menu {
+    height: 150px;
+    display: flex;
+    background-color: #fff;
+}
+
+#battle-message {
+    flex: 2;
+    border: 4px solid #333;
+    border-radius: 8px;
+    margin: 10px;
+    padding: 20px;
+    font-size: 16px;
+    line-height: 1.5;
+    box-shadow: inset 2px 2px 0 rgba(0,0,0,0.1);
+}
+
+#battle-actions {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 10px 10px 10px 0;
+}
+
+#battle-actions button {
+    background-color: #fff;
+    color: #333;
+    border: 4px solid #333;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 4px 0;
+    font-size: 16px;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+}
+
+#battle-actions button:hover {
+    background-color: #f0f0f0;
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+}
