@@ -79,8 +79,10 @@ function drawTile(name, destX, destY) {
 let portals = [];
 let mapGrid = [];
 let mapObjects = [];
-const MAP_COLS = 25; // 800 / 32
-const MAP_ROWS = 19; // 600 / 32
+let MAP_COLS = 50; // 1600 / 32
+let MAP_ROWS = 50; // 1600 / 32
+let camX = 0;
+let camY = 0;
 
 // 0: grass, 1: path, 2: stoneFloor, 3: wall, 4: water, 5: bridge, 6: tallGrass
 function clearMap() {
@@ -91,6 +93,9 @@ function clearMap() {
 
 function buildCityMap() {
     clearMap();
+    MAP_COLS = 50;
+    MAP_ROWS = 50;
+
     // Fill with grass
     for(let r=0; r<MAP_ROWS; r++) {
         let row = [];
@@ -100,44 +105,49 @@ function buildCityMap() {
         mapGrid.push(row);
     }
 
-    // Add Tall Grass patch for encounters
-    for(let r=2; r<7; r++) {
-        for(let c=2; c<8; c++) {
-            mapGrid[r][c] = 6; // tallGrass
+    // Add Multiple Tall Grass patches
+    for(let r=5; r<15; r++) {
+        for(let c=2; c<10; c++) {
+            mapGrid[r][c] = 6;
+        }
+    }
+    for(let r=30; r<45; r++) {
+        for(let c=30; c<40; c++) {
+            mapGrid[r][c] = 6;
         }
     }
 
-    // Draw a path in the middle
-    for(let r=4; r<14; r++) {
-        mapGrid[r][11] = 1;
-        mapGrid[r][12] = 1;
+    // Draw paths connecting points of interest
+    for(let r=10; r<40; r++) {
+        mapGrid[r][15] = 1;
+        mapGrid[r][16] = 1;
     }
-    for(let c=5; c<20; c++) {
-        mapGrid[8][c] = 1;
-        mapGrid[9][c] = 1;
+    for(let c=15; c<45; c++) {
+        mapGrid[25][c] = 1;
+        mapGrid[26][c] = 1;
     }
 
-    // Add a River
+    // Add a River down the middle
     for(let r=0; r<MAP_ROWS; r++) {
-        mapGrid[r][19] = 4; // Water
-        mapGrid[r][20] = 4; // Water
+        mapGrid[r][28] = 4; // Water
+        mapGrid[r][29] = 4; // Water
     }
 
     // Bridge over river
-    mapGrid[8][19] = 5;
-    mapGrid[8][20] = 5;
-    mapGrid[9][19] = 5;
-    mapGrid[9][20] = 5;
+    mapGrid[25][28] = 5;
+    mapGrid[25][29] = 5;
+    mapGrid[26][28] = 5;
+    mapGrid[26][29] = 5;
 
-    // Add Houses
-    mapObjects.push({ type: 'house', x: 2 * TILE_SIZE, y: 2 * TILE_SIZE });
-    mapObjects.push({ type: 'house', x: 14 * TILE_SIZE, y: 2 * TILE_SIZE });
-    mapObjects.push({ type: 'house', x: 2 * TILE_SIZE, y: 12 * TILE_SIZE });
+    // Add Houses and Shop spread out
+    mapObjects.push({ type: 'house', x: 12 * TILE_SIZE, y: 8 * TILE_SIZE });
+    mapObjects.push({ type: 'house', x: 20 * TILE_SIZE, y: 8 * TILE_SIZE });
+    mapObjects.push({ type: 'house', x: 12 * TILE_SIZE, y: 35 * TILE_SIZE });
 
-    // Add Shop (Pokemart)
-    mapObjects.push({ type: 'house', x: 8 * TILE_SIZE, y: 2 * TILE_SIZE, isShop: true });
+    // Add Shop (Pokemart) centrally located
+    mapObjects.push({ type: 'house', x: 16 * TILE_SIZE, y: 22 * TILE_SIZE, isShop: true });
 
-    // Add Trees (Forest border)
+    // Add Trees (Forest border for new large size)
     for(let c=0; c<MAP_COLS; c++) {
         mapObjects.push({ type: 'tree', x: c * TILE_SIZE, y: -TILE_SIZE });
         mapObjects.push({ type: 'tree', x: c * TILE_SIZE, y: (MAP_ROWS - 1) * TILE_SIZE });
@@ -147,20 +157,27 @@ function buildCityMap() {
         mapObjects.push({ type: 'tree', x: (MAP_COLS - 1) * TILE_SIZE, y: r * TILE_SIZE });
     }
 
-    // A few random trees
-    mapObjects.push({ type: 'tree', x: 6 * TILE_SIZE, y: 5 * TILE_SIZE });
-    mapObjects.push({ type: 'tree', x: 17 * TILE_SIZE, y: 13 * TILE_SIZE });
+    // A few random trees for flavor
+    mapObjects.push({ type: 'tree', x: 8 * TILE_SIZE, y: 12 * TILE_SIZE });
+    mapObjects.push({ type: 'tree', x: 35 * TILE_SIZE, y: 28 * TILE_SIZE });
+    mapObjects.push({ type: 'tree', x: 42 * TILE_SIZE, y: 15 * TILE_SIZE });
 
-    // Add a normal Trainer
+    // Trainers
     mapObjects.push({
         type: 'trainer', id: 'trainer_bugcatcher', name: 'Bug Catcher Tim',
-        x: 10 * TILE_SIZE, y: 15 * TILE_SIZE,
+        x: 10 * TILE_SIZE, y: 18 * TILE_SIZE,
         team: [generatePokemon(10, 3), generatePokemon(11, 4)]
+    });
+    mapObjects.push({
+        type: 'trainer', id: 'trainer_youngster', name: 'Youngster Joey',
+        x: 32 * TILE_SIZE, y: 35 * TILE_SIZE,
+        team: [generatePokemon(19, 4), generatePokemon(19, 5)]
     });
 
     // Portals
-    createPortal(400, 100, 'dungeon', 'Dungeon Cave');
-    createPortal(700, 450, 'gym', 'Pewter Gym');
+    createPortal(16 * TILE_SIZE, 12 * TILE_SIZE, 'rock_dungeon', 'Mt. Moon Cave');
+    createPortal(40 * TILE_SIZE, 40 * TILE_SIZE, 'water_dungeon', 'Seafoam Cave');
+    createPortal(40 * TILE_SIZE, 26 * TILE_SIZE, 'gym', 'Pewter Gym');
 }
 
 function buildGymMap() {
@@ -208,8 +225,11 @@ function buildGymMap() {
     createPortal(400, 500, 'city', 'Exit');
 }
 
-function buildDungeonMap() {
+function buildRockDungeon() {
     clearMap();
+    MAP_COLS = 30;
+    MAP_ROWS = 30;
+
     // Fill with stone floor
     for(let r=0; r<MAP_ROWS; r++) {
         let row = [];
@@ -229,14 +249,61 @@ function buildDungeonMap() {
         mapGrid[r][MAP_COLS - 1] = 3;
     }
 
-    // Some inner walls
-    for(let r=4; r<12; r++) {
-        mapGrid[r][6] = 3;
-        mapGrid[r][18] = 3;
+    // Some inner walls (Maze-like)
+    for(let r=4; r<20; r++) {
+        mapGrid[r][10] = 3;
+        mapGrid[r][20] = 3;
+    }
+    for(let c=10; c<20; c++) {
+        mapGrid[25][c] = 3;
     }
 
-    // Portal to City
-    createPortal(400, 500, 'city', 'Exit');
+    // Add Hiker Trainer
+    mapObjects.push({
+        type: 'trainer', id: 'trainer_hiker1', name: 'Hiker David',
+        x: 15 * TILE_SIZE, y: 15 * TILE_SIZE,
+        team: [generatePokemon(74, 8), generatePokemon(41, 7)] // Geodude, Zubat
+    });
+
+    createPortal(400, 800, 'city', 'Exit to City');
+}
+
+function buildWaterDungeon() {
+    clearMap();
+    MAP_COLS = 30;
+    MAP_ROWS = 30;
+
+    // Fill with Water
+    for(let r=0; r<MAP_ROWS; r++) {
+        let row = [];
+        for(let c=0; c<MAP_COLS; c++) {
+            row.push(4); // water
+        }
+        mapGrid.push(row);
+    }
+
+    // Add Path islands
+    for(let r=5; r<25; r++) {
+        for(let c=5; c<25; c++) {
+            if (Math.random() > 0.5) mapGrid[r][c] = 1; // path
+        }
+    }
+
+    // Ensure start point is solid
+    for(let r=25; r<29; r++) {
+        for(let c=12; c<16; c++) {
+            mapGrid[r][c] = 1;
+        }
+    }
+
+    // Add Swimmer Trainer
+    mapObjects.push({
+        type: 'trainer', id: 'trainer_swimmer1', name: 'Swimmer Misty',
+        x: 15 * TILE_SIZE, y: 10 * TILE_SIZE,
+        team: [generatePokemon(72, 10), generatePokemon(54, 9)] // Tentacool, Psyduck
+    });
+
+    createPortal(450, 850, 'city', 'Exit to City');
 }
 
 function createPortal(x, y, targetMap, label) {
@@ -247,9 +314,16 @@ function drawMap() {
     const time = Date.now();
     const waterFrame = Math.floor(time / 400) % 3;
 
-    // Draw Base Grid
-    for(let r=0; r<MAP_ROWS; r++) {
-        for(let c=0; c<MAP_COLS; c++) {
+    // Calculate visible grid based on camera
+    const startCol = Math.max(0, Math.floor(camX / TILE_SIZE) - 1);
+    const endCol = Math.min(MAP_COLS, startCol + Math.ceil(800 / TILE_SIZE) + 2);
+    const startRow = Math.max(0, Math.floor(camY / TILE_SIZE) - 1);
+    const endRow = Math.min(MAP_ROWS, startRow + Math.ceil(600 / TILE_SIZE) + 2);
+
+    // Draw Base Grid (Culling applied)
+    for(let r=startRow; r<endRow; r++) {
+        for(let c=startCol; c<endCol; c++) {
+            if (!mapGrid[r] || mapGrid[r][c] === undefined) continue;
             const tile = mapGrid[r][c];
             const px = c * TILE_SIZE;
             const py = r * TILE_SIZE;
@@ -267,6 +341,9 @@ function drawMap() {
     // Draw Map Objects (Trees, Houses)
     mapObjects.sort((a,b) => a.y - b.y);
     for (const obj of mapObjects) {
+        // Simple culling for objects
+        if (obj.x < camX - 100 || obj.x > camX + 900 || obj.y < camY - 100 || obj.y > camY + 700) continue;
+
         if (obj.type === 'tree') {
             drawTile('tree', obj.x, obj.y - TILE_SIZE);
         } else if (obj.type === 'house') {
@@ -286,6 +363,8 @@ function drawMap() {
 
     // Draw Portals (Classic warp pad style)
     for (const portal of portals) {
+        if (portal.x < camX - 50 || portal.x > camX + 850 || portal.y < camY - 50 || portal.y > camY + 650) continue;
+
         ctx.fillStyle = '#8A2BE2'; // Purple
         ctx.beginPath();
         ctx.ellipse(portal.x, portal.y, 24, 12, 0, 0, Math.PI * 2);
@@ -777,7 +856,8 @@ socket.on('playerStatsUpdate', (statsInfo) => {
 function loadMap(mapName) {
     if (mapName === 'city') buildCityMap();
     else if (mapName === 'gym') buildGymMap();
-    else if (mapName === 'dungeon') buildDungeonMap();
+    else if (mapName === 'rock_dungeon') buildRockDungeon();
+    else if (mapName === 'water_dungeon') buildWaterDungeon();
 }
 
 function updateMyUI() {
@@ -814,9 +894,9 @@ function animate() {
 
         // Boundary roughly matching our 3D plane scale
         if (me.x < 0) me.x = 0;
-        if (me.x > 800) me.x = 800;
+        if (me.x > MAP_COLS * TILE_SIZE) me.x = MAP_COLS * TILE_SIZE;
         if (me.y < 0) me.y = 0;
-        if (me.y > 600) me.y = 600;
+        if (me.y > MAP_ROWS * TILE_SIZE) me.y = MAP_ROWS * TILE_SIZE;
 
         if (me.x !== oldX || me.y !== oldY) {
             me.walkFrame = (me.walkFrame || 0) + 0.2;
@@ -898,8 +978,16 @@ function animate() {
         }
     }
 
+    // Calculate Camera Position
+    camX = Math.max(0, Math.min(me.x - 400, MAP_COLS * TILE_SIZE - 800));
+    camY = Math.max(0, Math.min(me.y - 300, MAP_ROWS * TILE_SIZE - 600));
+
     // Clear Canvas and Draw Map
     ctx.clearRect(0, 0, 800, 600);
+
+    ctx.save();
+    ctx.translate(-camX, -camY);
+
     drawMap();
 
     // Draw Players (Sort by Y for depth)
@@ -907,6 +995,9 @@ function animate() {
     playersInMap.sort((a,b) => a.y - b.y);
 
     for (const p of playersInMap) {
+        // Simple culling for players off screen
+        if (p.x < camX - 100 || p.x > camX + 900 || p.y < camY - 100 || p.y > camY + 700) continue;
+
         drawPlayerSprite(ctx, p.x, p.y, p.color, p.facing || 'down', p.walkFrame || 0, p.id === myId);
 
         // Name Tag
@@ -921,6 +1012,8 @@ function animate() {
         ctx.strokeText(text, p.x, p.y - 20);
         ctx.fillText(text, p.x, p.y - 20);
     }
+
+    ctx.restore();
 
     requestAnimationFrame(animate);
 }
