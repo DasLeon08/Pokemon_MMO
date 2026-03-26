@@ -16,60 +16,251 @@ const gainExpBtn = document.getElementById('gainExpBtn');
 // 2D Canvas Setup
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+// Disable smoothing for crisp pixel art look
+ctx.imageSmoothingEnabled = false;
+
+// --- Procedural Pixel Art Sprites ---
+const TILE_SIZE = 40;
+const sprites = {};
+
+function createPixelSprite(width, height, drawFn) {
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = width;
+    offCanvas.height = height;
+    const offCtx = offCanvas.getContext('2d');
+    offCtx.imageSmoothingEnabled = false;
+    drawFn(offCtx, width, height);
+    return offCanvas;
+}
+
+// Generate Grass Tile
+sprites.grass = createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
+    c.fillStyle = '#78C850'; // Base grass green
+    c.fillRect(0, 0, w, h);
+    c.fillStyle = '#58A830'; // Darker green specs
+    for (let i = 0; i < 15; i++) {
+        c.fillRect(Math.floor(Math.random() * (w/4)) * 4, Math.floor(Math.random() * (h/4)) * 4, 4, 4);
+    }
+    c.fillStyle = '#98D870'; // Lighter green specs
+    for (let i = 0; i < 10; i++) {
+        c.fillRect(Math.floor(Math.random() * (w/4)) * 4, Math.floor(Math.random() * (h/4)) * 4, 4, 4);
+    }
+});
+
+// Generate Tree Sprite
+sprites.tree = createPixelSprite(TILE_SIZE, TILE_SIZE * 1.5, (c, w, h) => {
+    // Shadow
+    c.fillStyle = 'rgba(0,0,0,0.3)';
+    c.beginPath();
+    c.ellipse(w/2, h - 8, 12, 6, 0, 0, Math.PI*2);
+    c.fill();
+    // Trunk
+    c.fillStyle = '#8B5A2B';
+    c.fillRect(16, 40, 8, 16);
+    c.fillStyle = '#6B3A0B';
+    c.fillRect(16, 40, 4, 16); // Trunk shadow
+    // Leaves (Layers of circles to look bushy like pokemon trees)
+    c.fillStyle = '#228B22';
+    c.beginPath(); c.arc(20, 20, 16, 0, Math.PI*2); c.fill();
+    c.beginPath(); c.arc(10, 30, 12, 0, Math.PI*2); c.fill();
+    c.beginPath(); c.arc(30, 30, 12, 0, Math.PI*2); c.fill();
+    c.beginPath(); c.arc(20, 36, 14, 0, Math.PI*2); c.fill();
+
+    // Highlights
+    c.fillStyle = '#32CD32';
+    c.beginPath(); c.arc(16, 16, 10, 0, Math.PI*2); c.fill();
+    c.beginPath(); c.arc(8, 26, 6, 0, Math.PI*2); c.fill();
+    c.beginPath(); c.arc(26, 26, 6, 0, Math.PI*2); c.fill();
+});
+
+// Generate Path Tile
+sprites.path = createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
+    c.fillStyle = '#F0E68C'; // Khaki / Sand color
+    c.fillRect(0, 0, w, h);
+    c.fillStyle = '#DDA0DD'; // Slight variation
+    for (let i = 0; i < 20; i++) {
+        if(Math.random() > 0.7) {
+            c.fillStyle = '#E6D870';
+            c.fillRect(Math.floor(Math.random() * (w/2)) * 2, Math.floor(Math.random() * (h/2)) * 2, 2, 2);
+        }
+    }
+});
+
+// Generate Building/House Tile (Takes up 2x2 grid)
+sprites.house = createPixelSprite(TILE_SIZE * 2, TILE_SIZE * 2, (c, w, h) => {
+    // Base structure
+    c.fillStyle = '#D2B48C'; // Tan wall
+    c.fillRect(4, 32, w - 8, h - 32);
+    // Roof
+    c.fillStyle = '#CD5C5C'; // Indian Red roof
+    c.beginPath();
+    c.moveTo(0, 32);
+    c.lineTo(w/2, 4);
+    c.lineTo(w, 32);
+    c.fill();
+    // Door
+    c.fillStyle = '#8B4513';
+    c.fillRect(w/2 - 8, h - 20, 16, 20);
+    // Windows
+    c.fillStyle = '#87CEEB';
+    c.fillRect(12, 44, 16, 16);
+    c.fillRect(w - 28, 44, 16, 16);
+    // Outline / Detail
+    c.strokeStyle = '#333';
+    c.lineWidth = 2;
+    c.strokeRect(4, 32, w - 8, h - 32);
+    c.strokeRect(w/2 - 8, h - 20, 16, 20);
+});
+
+// Generate Stone Floor Tile
+sprites.stoneFloor = createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
+    c.fillStyle = '#696969';
+    c.fillRect(0, 0, w, h);
+    c.strokeStyle = '#444';
+    c.lineWidth = 1;
+    // Simple 2x2 brick pattern per tile
+    c.strokeRect(0, 0, w/2, h/2);
+    c.strokeRect(w/2, 0, w/2, h/2);
+    c.strokeRect(0, h/2, w/2, h/2);
+    c.strokeRect(w/2, h/2, w/2, h/2);
+});
+
+// Generate Dungeon Wall Tile
+sprites.wall = createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
+    c.fillStyle = '#2F4F4F'; // Dark slate
+    c.fillRect(0, 0, w, h);
+    c.fillStyle = '#1F3F3F';
+    c.fillRect(0, h - 8, w, 8); // Depth shadow
+    c.strokeStyle = '#000';
+    c.strokeRect(0,0,w,h);
+});
+
+// Generate Player Character Sprite Template (facing down)
+sprites.player = createPixelSprite(24, 32, (c, w, h) => {
+    // Shadow
+    c.fillStyle = 'rgba(0,0,0,0.3)';
+    c.beginPath(); c.ellipse(12, 28, 8, 4, 0, 0, Math.PI*2); c.fill();
+    // Body (Colored dynamically in draw, so we'll draw grayscale here and tint later,
+    // OR we draw the player directly in the render loop using this style)
+});
+
+function drawPlayerSprite(ctx, x, y, color) {
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(x, y + 12, 12, 6, 0, 0, Math.PI*2); ctx.fill();
+
+    // Body (Rectangle with slightly rounded look)
+    ctx.fillStyle = color;
+    ctx.fillRect(x - 10, y - 8, 20, 16);
+
+    // Head (Circle)
+    ctx.fillStyle = '#FFE4C4'; // Skin tone
+    ctx.beginPath(); ctx.arc(x, y - 12, 10, 0, Math.PI*2); ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x - 4, y - 14, 2, 2);
+    ctx.fillRect(x + 2, y - 14, 2, 2);
+
+    // Hat (Classic Red/White cap)
+    ctx.fillStyle = '#FF0000';
+    ctx.beginPath(); ctx.arc(x, y - 14, 10, Math.PI, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#FFF';
+    ctx.fillRect(x - 10, y - 14, 20, 3);
+
+    // Backpack
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(x - 12, y - 4, 4, 10);
+}
+
 
 // --- Maps & Environment ---
 let portals = [];
+let mapGrid = [];
 let mapObjects = [];
-let backgroundColor = '#87CEEB';
+const MAP_COLS = 20; // 800 / 40
+const MAP_ROWS = 15; // 600 / 40
 
+// 0: grass, 1: path, 2: stoneFloor, 3: wall
 function clearMap() {
-    mapObjects = [];
+    mapGrid = [];
     portals = [];
+    mapObjects = []; // Extra objects like trees/houses
 }
 
 function buildCityMap() {
     clearMap();
-    backgroundColor = '#87CEEB'; // Sky blue
-
-    // Buildings
-    for (let i = 0; i < 20; i++) {
-        mapObjects.push({
-            type: 'building',
-            x: Math.random() * 700 + 50,
-            y: Math.random() * 500 + 50,
-            w: 40,
-            h: 40,
-            color: '#b0c4de'
-        });
+    // Fill with grass
+    for(let r=0; r<MAP_ROWS; r++) {
+        let row = [];
+        for(let c=0; c<MAP_COLS; c++) {
+            row.push(0); // grass
+        }
+        mapGrid.push(row);
     }
 
-    // Trees
-    for (let i = 0; i < 30; i++) {
-        mapObjects.push({
-            type: 'tree',
-            x: Math.random() * 750 + 25,
-            y: Math.random() * 550 + 25,
-            radius: 15,
-            color: '#2d8a36'
-        });
+    // Draw a path in the middle
+    for(let r=4; r<12; r++) {
+        mapGrid[r][9] = 1;
+        mapGrid[r][10] = 1;
     }
+    for(let c=5; c<15; c++) {
+        mapGrid[8][c] = 1;
+        mapGrid[9][c] = 1;
+    }
+
+    // Add Houses
+    mapObjects.push({ type: 'house', x: 2 * TILE_SIZE, y: 2 * TILE_SIZE });
+    mapObjects.push({ type: 'house', x: 14 * TILE_SIZE, y: 2 * TILE_SIZE });
+    mapObjects.push({ type: 'house', x: 2 * TILE_SIZE, y: 10 * TILE_SIZE });
+
+    // Add Trees (Forest border)
+    for(let c=0; c<MAP_COLS; c++) {
+        mapObjects.push({ type: 'tree', x: c * TILE_SIZE, y: -10 });
+        mapObjects.push({ type: 'tree', x: c * TILE_SIZE, y: (MAP_ROWS - 1) * TILE_SIZE });
+    }
+    for(let r=1; r<MAP_ROWS-1; r++) {
+        mapObjects.push({ type: 'tree', x: 0, y: r * TILE_SIZE });
+        mapObjects.push({ type: 'tree', x: (MAP_COLS - 1) * TILE_SIZE, y: r * TILE_SIZE });
+    }
+
+    // A few random trees
+    mapObjects.push({ type: 'tree', x: 5 * TILE_SIZE, y: 5 * TILE_SIZE });
+    mapObjects.push({ type: 'tree', x: 15 * TILE_SIZE, y: 12 * TILE_SIZE });
 
     // Portal to Dungeon
-    createPortal(400, 100, 'dungeon', 'Enter Dungeon');
+    createPortal(400, 100, 'dungeon', 'Dungeon Cave');
 }
 
 function buildDungeonMap() {
     clearMap();
-    backgroundColor = '#333333'; // Dark
+    // Fill with stone floor
+    for(let r=0; r<MAP_ROWS; r++) {
+        let row = [];
+        for(let c=0; c<MAP_COLS; c++) {
+            row.push(2); // stone floor
+        }
+        mapGrid.push(row);
+    }
 
-    // Walls
-    mapObjects.push({ type: 'wall', x: 0, y: 0, w: 800, h: 40, color: '#555' }); // Top
-    mapObjects.push({ type: 'wall', x: 0, y: 560, w: 800, h: 40, color: '#555' }); // Bottom
-    mapObjects.push({ type: 'wall', x: 0, y: 0, w: 40, h: 600, color: '#555' }); // Left
-    mapObjects.push({ type: 'wall', x: 760, y: 0, w: 40, h: 600, color: '#555' }); // Right
+    // Add Walls (Border)
+    for(let c=0; c<MAP_COLS; c++) {
+        mapGrid[0][c] = 3;
+        mapGrid[MAP_ROWS - 1][c] = 3;
+    }
+    for(let r=0; r<MAP_ROWS; r++) {
+        mapGrid[r][0] = 3;
+        mapGrid[r][MAP_COLS - 1] = 3;
+    }
+
+    // Some inner walls
+    for(let r=4; r<10; r++) {
+        mapGrid[r][5] = 3;
+        mapGrid[r][14] = 3;
+    }
 
     // Portal to City
-    createPortal(400, 500, 'city', 'Exit to City');
+    createPortal(400, 500, 'city', 'Exit');
 }
 
 function createPortal(x, y, targetMap, label) {
@@ -77,39 +268,51 @@ function createPortal(x, y, targetMap, label) {
 }
 
 function drawMap() {
-    // Background
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(0, 0, 800, 600);
+    // Draw Base Grid
+    for(let r=0; r<MAP_ROWS; r++) {
+        for(let c=0; c<MAP_COLS; c++) {
+            const tile = mapGrid[r][c];
+            const px = c * TILE_SIZE;
+            const py = r * TILE_SIZE;
 
-    // Map Objects
-    for (const obj of mapObjects) {
-        ctx.fillStyle = obj.color;
-        if (obj.type === 'building' || obj.type === 'wall') {
-            ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
-        } else if (obj.type === 'tree') {
-            ctx.beginPath();
-            ctx.arc(obj.x, obj.y, obj.radius, 0, Math.PI * 2);
-            ctx.fill();
-            // trunk
-            ctx.fillStyle = '#5c4033';
-            ctx.fillRect(obj.x - 4, obj.y + obj.radius - 5, 8, 10);
+            if (tile === 0) ctx.drawImage(sprites.grass, px, py);
+            else if (tile === 1) ctx.drawImage(sprites.path, px, py);
+            else if (tile === 2) ctx.drawImage(sprites.stoneFloor, px, py);
+            else if (tile === 3) ctx.drawImage(sprites.wall, px, py);
         }
     }
 
-    // Portals
+    // Draw Map Objects (Trees, Houses)
+    // Sort objects by Y so things in front draw on top (fake depth)
+    mapObjects.sort((a,b) => a.y - b.y);
+    for (const obj of mapObjects) {
+        if (obj.type === 'tree') {
+            // Adjust to draw sprite centered on its tile bottom
+            ctx.drawImage(sprites.tree, obj.x, obj.y - (TILE_SIZE * 0.5));
+        } else if (obj.type === 'house') {
+            ctx.drawImage(sprites.house, obj.x, obj.y - TILE_SIZE);
+        }
+    }
+
+    // Draw Portals (Classic warp pad style)
     for (const portal of portals) {
-        ctx.fillStyle = 'cyan';
+        ctx.fillStyle = '#8A2BE2'; // Purple
         ctx.beginPath();
-        ctx.arc(portal.x, portal.y, portal.radius, 0, Math.PI * 2);
+        ctx.ellipse(portal.x, portal.y, 24, 12, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = 'blue';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        ctx.fillStyle = '#DDA0DD'; // Light Purple inner
+        ctx.beginPath();
+        ctx.ellipse(portal.x, portal.y, 16, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
 
         ctx.fillStyle = 'white';
-        ctx.font = 'bold 12px Arial';
+        ctx.font = 'bold 12px "Press Start 2P", monospace, Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(portal.label, portal.x, portal.y - portal.radius - 5);
+        // Black text shadow
+        ctx.fillStyle = 'black';
+        ctx.fillText(portal.label, portal.x + 1, portal.y - 24 + 1);
+        ctx.fillStyle = 'white';
+        ctx.fillText(portal.label, portal.x, portal.y - 24);
     }
 }
 
@@ -274,31 +477,24 @@ function animate() {
     ctx.clearRect(0, 0, 800, 600);
     drawMap();
 
-    // Draw Players
-    for (const id in players) {
-        if (players[id].map === currentMap) {
-            const p = players[id];
+    // Draw Players (Sort by Y for depth)
+    const playersInMap = Object.values(players).filter(p => p.map === currentMap);
+    playersInMap.sort((a,b) => a.y - b.y);
 
-            // Player body
-            ctx.fillStyle = p.color;
-            ctx.fillRect(p.x - 10, p.y - 10, 20, 20);
+    for (const p of playersInMap) {
+        drawPlayerSprite(ctx, p.x, p.y, p.color);
 
-            // Red Hat
-            ctx.fillStyle = '#ff0000';
-            ctx.fillRect(p.x - 8, p.y - 15, 16, 5);
-
-            // Name Tag
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            // Black outline
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = 'black';
-            const lvl = p.level || 1;
-            const text = `${id === myId ? 'You' : 'Player'} (Lv.${lvl})`;
-            ctx.strokeText(text, p.x, p.y - 20);
-            ctx.fillText(text, p.x, p.y - 20);
-        }
+        // Name Tag
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 12px "Press Start 2P", monospace, Arial';
+        ctx.textAlign = 'center';
+        // Black outline
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'black';
+        const lvl = p.level || 1;
+        const text = `${p.id === myId ? 'You' : 'Player'} (Lv.${lvl})`;
+        ctx.strokeText(text, p.x, p.y - 20);
+        ctx.fillText(text, p.x, p.y - 20);
     }
 
     requestAnimationFrame(animate);
