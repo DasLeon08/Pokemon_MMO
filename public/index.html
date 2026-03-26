@@ -22,9 +22,23 @@
         <div id="ui-overlay" style="display: none;">
             <div id="playerStats">
                 <div>Level: <span id="levelDisplay">1</span> | Exp: <span id="expDisplay">0</span>/<span id="expNeededDisplay">100</span></div>
-                <div style="margin-top: 5px;">Badges: <span id="badgeDisplay">0</span></div>
+                <div style="margin-top: 5px;">Badges: <span id="badgeDisplay">0</span> | Money: $<span id="moneyDisplay">300</span></div>
+                <div style="margin-top: 5px;">Potions: <span id="potionDisplay">3</span></div>
             </div>
         </div>
+
+        <!-- Shop Modal -->
+        <div id="shop-container" style="display: none;">
+            <h2>Pokemart</h2>
+            <p>Welcome! We sell items to help your Pokemon.</p>
+            <div class="shop-item">
+                <span>Potion ($50) - Heals 20 HP</span>
+                <button id="btn-buy-potion">Buy</button>
+            </div>
+            <br>
+            <button id="btn-close-shop">Leave Shop</button>
+        </div>
+
         <canvas id="gameCanvas" width="800" height="600"></canvas>
 
         <div id="battle-container" style="display: none;">
@@ -39,12 +53,14 @@
                 <div class="health-box" id="player-health">
                     <div id="player-name-level">Your Pokemon Lv.5</div>
                     <div class="hp-bar"><div class="hp-fill" id="player-hp-fill"></div></div>
+                    <div id="player-hp-text" style="font-size: 12px; margin-top: 5px; text-align: right; font-weight: bold;">20/20</div>
                 </div>
             </div>
             <div id="battle-menu">
                 <div id="battle-message">A wild Pokemon appeared!</div>
                 <div id="battle-actions">
                     <button id="btn-fight">Fight</button>
+                    <button id="btn-item">Item (<span id="btn-item-count">3</span>)</button>
                     <button id="btn-catch">Catch</button>
                     <button id="btn-run">Run</button>
                 </div>

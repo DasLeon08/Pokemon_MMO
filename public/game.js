@@ -134,6 +134,9 @@ function buildCityMap() {
     mapObjects.push({ type: 'house', x: 14 * TILE_SIZE, y: 2 * TILE_SIZE });
     mapObjects.push({ type: 'house', x: 2 * TILE_SIZE, y: 12 * TILE_SIZE });
 
+    // Add Shop (Pokemart)
+    mapObjects.push({ type: 'house', x: 8 * TILE_SIZE, y: 2 * TILE_SIZE, isShop: true });
+
     // Add Trees (Forest border)
     for(let c=0; c<MAP_COLS; c++) {
         mapObjects.push({ type: 'tree', x: c * TILE_SIZE, y: -TILE_SIZE });
@@ -268,6 +271,12 @@ function drawMap() {
             drawTile('tree', obj.x, obj.y - TILE_SIZE);
         } else if (obj.type === 'house') {
             drawTile('house', obj.x, obj.y - TILE_SIZE * 2);
+            if (obj.isShop) {
+                ctx.fillStyle = 'blue';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('MART', obj.x + TILE_SIZE * 1.5, obj.y - TILE_SIZE);
+            }
         } else if (obj.type === 'trainer') {
             if (!defeatedTrainers[obj.id]) {
                 drawPlayerSprite(ctx, obj.x + TILE_SIZE/2, obj.y + TILE_SIZE/2, 'red', 'down', 0);
@@ -328,6 +337,9 @@ let activePokemon = null;
 let turnActionLocked = false;
 let defeatedTrainers = {};
 let myBadges = 0;
+let myMoney = 300;
+let myInventory = { potion: 3 };
+let inShop = false;
 
 // Trainer Battle State
 let opponentIsTrainer = false;
@@ -346,6 +358,8 @@ const wildNameLvl = document.getElementById('wild-name-level');
 const playerNameLvl = document.getElementById('player-name-level');
 const wildHpFill = document.getElementById('wild-hp-fill');
 const playerHpFill = document.getElementById('player-hp-fill');
+const playerHpText = document.getElementById('player-hp-text');
+const btnItemCount = document.getElementById('btn-item-count');
 
 function startBattle(trainer = null) {
     inBattle = true;
@@ -397,6 +411,10 @@ function updateBattleUI() {
     wildHpFill.style.width = `${Math.max(0, (wildPokemon.hp / wildPokemon.maxHp) * 100)}%`;
     playerHpFill.style.width = `${Math.max(0, (activePokemon.hp / activePokemon.maxHp) * 100)}%`;
 
+    // Exact HP display
+    playerHpText.innerText = `${Math.max(0, activePokemon.hp)} / ${activePokemon.maxHp}`;
+    btnItemCount.innerText = myInventory.potion;
+
     // Color logic
     wildHpFill.style.backgroundColor = wildPokemon.hp / wildPokemon.maxHp < 0.2 ? 'red' : (wildPokemon.hp / wildPokemon.maxHp < 0.5 ? 'orange' : '#00ff00');
     playerHpFill.style.backgroundColor = activePokemon.hp / activePokemon.maxHp < 0.2 ? 'red' : (activePokemon.hp / activePokemon.maxHp < 0.5 ? 'orange' : '#00ff00');
@@ -434,7 +452,22 @@ function processTurn(action) {
             endBattle();
         } else {
             battleMessage.innerText = `Oh no! ${wildPokemon.name} broke free!`;
-            wildAttack();
+            setTimeout(wildAttack, 1000);
+        }
+        return;
+    }
+
+    if (action === 'item') {
+        if (myInventory.potion > 0) {
+            myInventory.potion -= 1;
+            activePokemon.hp = Math.min(activePokemon.maxHp, activePokemon.hp + 20);
+            battleMessage.innerText = `You used a Potion! ${activePokemon.name} recovered 20 HP.`;
+            updateBattleUI();
+            updateMyUI();
+            setTimeout(wildAttack, 1500);
+        } else {
+            battleMessage.innerText = "You don't have any Potions left!";
+            setTimeout(() => { turnActionLocked = false; }, 1500);
         }
         return;
     }
@@ -492,8 +525,11 @@ function wildAttack() {
 
 function awardExp() {
     const expGain = wildPokemon.level * 10;
+    const moneyGain = opponentIsTrainer ? wildPokemon.level * 20 : wildPokemon.level * 5;
     activePokemon.exp += expGain;
-    battleMessage.innerText = `${activePokemon.name} gained ${expGain} EXP!`;
+    myMoney += moneyGain;
+    updateMyUI();
+    battleMessage.innerText = `${activePokemon.name} gained ${expGain} EXP! Found $${moneyGain}!`;
 
     const expNeeded = activePokemon.level * 20;
     if (activePokemon.exp >= expNeeded) {
@@ -561,8 +597,27 @@ function checkBattleContinue() {
     }
 }
 
+// Shop Logic
+document.getElementById('btn-buy-potion').addEventListener('click', () => {
+    if (myMoney >= 50) {
+        myMoney -= 50;
+        myInventory.potion += 1;
+        updateMyUI();
+        alert('Bought a Potion!');
+    } else {
+        alert('Not enough money!');
+    }
+});
+document.getElementById('btn-close-shop').addEventListener('click', () => {
+    inShop = false;
+    document.getElementById('shop-container').style.display = 'none';
+    // push player away slightly so they don't instantly trigger it again
+    players[myId].y += 10;
+});
+
 // Attach Battle Listeners
 document.getElementById('btn-fight').addEventListener('click', () => processTurn('fight'));
+document.getElementById('btn-item').addEventListener('click', () => processTurn('item'));
 document.getElementById('btn-catch').addEventListener('click', () => processTurn('catch'));
 document.getElementById('btn-run').addEventListener('click', () => processTurn('run'));
 
@@ -679,10 +734,17 @@ function loadMap(mapName) {
 
 function updateMyUI() {
     if (players[myId]) {
-        const lvl = players[myId].level || 1;
-        levelDisplay.innerText = lvl;
-        expDisplay.innerText = players[myId].exp || 0;
-        expNeededDisplay.innerText = lvl * 100;
+        // We track local team level instead of just server level since we have local RPG state now
+        const activeLvl = activePokemon ? activePokemon.level : (players[myId].level || 1);
+        const activeExp = activePokemon ? activePokemon.exp : (players[myId].exp || 0);
+        const activeExpNeeded = activeLvl * 20;
+
+        levelDisplay.innerText = activeLvl;
+        expDisplay.innerText = activeExp;
+        expNeededDisplay.innerText = activeExpNeeded;
+
+        document.getElementById('moneyDisplay').innerText = myMoney;
+        document.getElementById('potionDisplay').innerText = myInventory.potion;
     }
 }
 
@@ -709,6 +771,29 @@ function animate() {
         if (me.x !== oldX || me.y !== oldY) {
             me.walkFrame = (me.walkFrame || 0) + 0.2;
             socket.emit('playerMovement', { x: me.x, y: me.y });
+
+            // Shop Collision Check
+            let shopCollision = false;
+            for (const obj of mapObjects) {
+                if (obj.isShop) {
+                    const hx = obj.x + TILE_SIZE;
+                    const hy = obj.y + TILE_SIZE;
+                    const dx = me.x - hx;
+                    const dy = me.y - hy;
+                    if (dx*dx + dy*dy < 1200) { // ~34 pixel radius interaction
+                        shopCollision = true;
+                        if (!inShop) {
+                            inShop = true;
+                            document.getElementById('shop-container').style.display = 'block';
+                        }
+                        break;
+                    }
+                }
+            }
+            if (!shopCollision && inShop) {
+                inShop = false;
+                document.getElementById('shop-container').style.display = 'none';
+            }
 
             // Encounter check in tall grass
             const gridX = Math.floor(me.x / TILE_SIZE);

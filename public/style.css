@@ -206,3 +206,48 @@ canvas {
     transform: translate(1px, 1px);
     box-shadow: 1px 1px 0 rgba(0,0,0,0.2);
 }
+
+#shop-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    background-color: #fff;
+    border: 4px solid #333;
+    border-radius: 8px;
+    padding: 20px;
+    z-index: 200;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    text-align: center;
+}
+
+#shop-container h2 {
+    color: #4169E1;
+    margin-top: 0;
+}
+
+.shop-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f8f8;
+    border: 2px solid #ccc;
+    padding: 10px;
+    margin: 10px 0;
+    font-size: 14px;
+}
+
+.shop-item button, #btn-close-shop {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 15px;
+    border: 2px solid #333;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.shop-item button:hover, #btn-close-shop:hover {
+    background-color: #45a049;
+}
