@@ -31,7 +31,8 @@ io.on('connection', (socket) => {
       color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
       id: socket.id,
       level: 1,
-      exp: 0
+      exp: 0,
+      map: 'city'
     };
 
     socket.emit('roomCreated', roomId);
@@ -51,7 +52,8 @@ io.on('connection', (socket) => {
         color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
         id: socket.id,
         level: 1,
-        exp: 0
+        exp: 0,
+        map: 'city'
       };
 
       socket.emit('roomJoined', roomId);
@@ -71,6 +73,24 @@ io.on('connection', (socket) => {
       rooms[socket.roomId].players[socket.id].y = movementData.y;
       // Broadcast new position to everyone else in the room
       socket.to(socket.roomId).emit('playerMoved', rooms[socket.roomId].players[socket.id]);
+    }
+  });
+
+  // Change Map
+  socket.on('changeMap', (mapData) => {
+    if (socket.roomId && rooms[socket.roomId] && rooms[socket.roomId].players[socket.id]) {
+      const p = rooms[socket.roomId].players[socket.id];
+      p.map = mapData.map;
+      p.x = mapData.x;
+      p.y = mapData.y;
+
+      // Tell everyone this player changed map/position
+      io.in(socket.roomId).emit('playerMapChanged', {
+        id: socket.id,
+        map: p.map,
+        x: p.x,
+        y: p.y
+      });
     }
   });
 
