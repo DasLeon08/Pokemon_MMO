@@ -23,7 +23,11 @@
             <div id="playerStats">
                 <div>Level: <span id="levelDisplay">1</span> | Exp: <span id="expDisplay">0</span>/<span id="expNeededDisplay">100</span></div>
                 <div style="margin-top: 5px;">Badges: <span id="badgeDisplay">0</span> | Money: $<span id="moneyDisplay">300</span></div>
-                <div style="margin-top: 5px;">Potions: <span id="potionDisplay">3</span></div>
+                <div style="margin-top: 5px;">
+                    Potions: <span id="potionDisplay">3</span> |
+                    Super Potions: <span id="superPotionDisplay">0</span> |
+                    Pokeballs: <span id="pokeballDisplay">5</span>
+                </div>
             </div>
         </div>
 
@@ -32,8 +36,16 @@
             <h2>Pokemart</h2>
             <p>Welcome! We sell items to help your Pokemon.</p>
             <div class="shop-item">
+                <span>Pokeball ($100) - Catches wild Pokemon</span>
+                <button id="btn-buy-pokeball">Buy</button>
+            </div>
+            <div class="shop-item">
                 <span>Potion ($50) - Heals 20 HP</span>
                 <button id="btn-buy-potion">Buy</button>
+            </div>
+            <div class="shop-item">
+                <span>Super Potion ($150) - Heals 50 HP</span>
+                <button id="btn-buy-superpotion">Buy</button>
             </div>
             <br>
             <button id="btn-close-shop">Leave Shop</button>
@@ -60,8 +72,9 @@
                 <div id="battle-message">A wild Pokemon appeared!</div>
                 <div id="battle-actions">
                     <button id="btn-fight">Fight</button>
-                    <button id="btn-item">Item (<span id="btn-item-count">3</span>)</button>
-                    <button id="btn-catch">Catch</button>
+                    <button id="btn-item">Potion (<span id="btn-potion-count">3</span>)</button>
+                    <button id="btn-item-super">S. Potion (<span id="btn-superpotion-count">0</span>)</button>
+                    <button id="btn-catch">Catch (<span id="btn-pokeball-count">5</span>)</button>
                     <button id="btn-run">Run</button>
                 </div>
             </div>

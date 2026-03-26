@@ -338,7 +338,7 @@ let turnActionLocked = false;
 let defeatedTrainers = {};
 let myBadges = 0;
 let myMoney = 300;
-let myInventory = { potion: 3 };
+let myInventory = { potion: 3, superPotion: 0, pokeball: 5 };
 let inShop = false;
 
 // Trainer Battle State
@@ -359,7 +359,9 @@ const playerNameLvl = document.getElementById('player-name-level');
 const wildHpFill = document.getElementById('wild-hp-fill');
 const playerHpFill = document.getElementById('player-hp-fill');
 const playerHpText = document.getElementById('player-hp-text');
-const btnItemCount = document.getElementById('btn-item-count');
+const btnPotionCount = document.getElementById('btn-potion-count');
+const btnSuperPotionCount = document.getElementById('btn-superpotion-count');
+const btnPokeballCount = document.getElementById('btn-pokeball-count');
 
 function startBattle(trainer = null) {
     inBattle = true;
@@ -413,7 +415,9 @@ function updateBattleUI() {
 
     // Exact HP display
     playerHpText.innerText = `${Math.max(0, activePokemon.hp)} / ${activePokemon.maxHp}`;
-    btnItemCount.innerText = myInventory.potion;
+    btnPotionCount.innerText = myInventory.potion;
+    btnSuperPotionCount.innerText = myInventory.superPotion;
+    btnPokeballCount.innerText = myInventory.pokeball;
 
     // Color logic
     wildHpFill.style.backgroundColor = wildPokemon.hp / wildPokemon.maxHp < 0.2 ? 'red' : (wildPokemon.hp / wildPokemon.maxHp < 0.5 ? 'orange' : '#00ff00');
@@ -445,19 +449,27 @@ function processTurn(action) {
     }
 
     if (action === 'catch') {
-        const catchRate = 1 - (wildPokemon.hp / wildPokemon.maxHp);
-        if (Math.random() < catchRate + 0.1) {
-            battleMessage.innerText = `Gotcha! ${wildPokemon.name} was caught!`;
-            myTeam.push(wildPokemon);
-            endBattle();
+        if (myInventory.pokeball > 0) {
+            myInventory.pokeball -= 1;
+            updateMyUI();
+            updateBattleUI();
+            const catchRate = 1 - (wildPokemon.hp / wildPokemon.maxHp);
+            if (Math.random() < catchRate + 0.1) {
+                battleMessage.innerText = `Gotcha! ${wildPokemon.name} was caught!`;
+                myTeam.push(wildPokemon);
+                endBattle();
+            } else {
+                battleMessage.innerText = `Oh no! ${wildPokemon.name} broke free!`;
+                setTimeout(wildAttack, 1000);
+            }
         } else {
-            battleMessage.innerText = `Oh no! ${wildPokemon.name} broke free!`;
-            setTimeout(wildAttack, 1000);
+            battleMessage.innerText = "You don't have any Pokeballs left!";
+            setTimeout(() => { turnActionLocked = false; }, 1500);
         }
         return;
     }
 
-    if (action === 'item') {
+    if (action === 'potion') {
         if (myInventory.potion > 0) {
             myInventory.potion -= 1;
             activePokemon.hp = Math.min(activePokemon.maxHp, activePokemon.hp + 20);
@@ -467,6 +479,21 @@ function processTurn(action) {
             setTimeout(wildAttack, 1500);
         } else {
             battleMessage.innerText = "You don't have any Potions left!";
+            setTimeout(() => { turnActionLocked = false; }, 1500);
+        }
+        return;
+    }
+
+    if (action === 'superpotion') {
+        if (myInventory.superPotion > 0) {
+            myInventory.superPotion -= 1;
+            activePokemon.hp = Math.min(activePokemon.maxHp, activePokemon.hp + 50);
+            battleMessage.innerText = `You used a Super Potion! ${activePokemon.name} recovered 50 HP.`;
+            updateBattleUI();
+            updateMyUI();
+            setTimeout(wildAttack, 1500);
+        } else {
+            battleMessage.innerText = "You don't have any Super Potions left!";
             setTimeout(() => { turnActionLocked = false; }, 1500);
         }
         return;
@@ -598,12 +625,32 @@ function checkBattleContinue() {
 }
 
 // Shop Logic
+document.getElementById('btn-buy-pokeball').addEventListener('click', () => {
+    if (myMoney >= 100) {
+        myMoney -= 100;
+        myInventory.pokeball += 1;
+        updateMyUI();
+        alert('Bought a Pokeball!');
+    } else {
+        alert('Not enough money!');
+    }
+});
 document.getElementById('btn-buy-potion').addEventListener('click', () => {
     if (myMoney >= 50) {
         myMoney -= 50;
         myInventory.potion += 1;
         updateMyUI();
         alert('Bought a Potion!');
+    } else {
+        alert('Not enough money!');
+    }
+});
+document.getElementById('btn-buy-superpotion').addEventListener('click', () => {
+    if (myMoney >= 150) {
+        myMoney -= 150;
+        myInventory.superPotion += 1;
+        updateMyUI();
+        alert('Bought a Super Potion!');
     } else {
         alert('Not enough money!');
     }
@@ -617,7 +664,8 @@ document.getElementById('btn-close-shop').addEventListener('click', () => {
 
 // Attach Battle Listeners
 document.getElementById('btn-fight').addEventListener('click', () => processTurn('fight'));
-document.getElementById('btn-item').addEventListener('click', () => processTurn('item'));
+document.getElementById('btn-item').addEventListener('click', () => processTurn('potion'));
+document.getElementById('btn-item-super').addEventListener('click', () => processTurn('superpotion'));
 document.getElementById('btn-catch').addEventListener('click', () => processTurn('catch'));
 document.getElementById('btn-run').addEventListener('click', () => processTurn('run'));
 
@@ -745,6 +793,8 @@ function updateMyUI() {
 
         document.getElementById('moneyDisplay').innerText = myMoney;
         document.getElementById('potionDisplay').innerText = myInventory.potion;
+        document.getElementById('superPotionDisplay').innerText = myInventory.superPotion;
+        document.getElementById('pokeballDisplay').innerText = myInventory.pokeball;
     }
 }
 

@@ -41,7 +41,14 @@ const MOVES = {
     'Earthquake': { power: 100, type: TYPES.GROUND },
     'Rock Throw': { power: 50, type: TYPES.ROCK },
     'Bug Bite': { power: 60, type: TYPES.BUG },
-    'Poison Sting': { power: 15, type: TYPES.POISON }
+    'Poison Sting': { power: 15, type: TYPES.POISON },
+    'Karate Chop': { power: 50, type: TYPES.NORMAL }, // Simple fighting type stand-in
+    'Confusion': { power: 50, type: TYPES.NORMAL }, // Simple psychic type stand-in
+    'Sludge': { power: 65, type: TYPES.POISON },
+    'Thunderbolt': { power: 90, type: TYPES.ELECTRIC },
+    'Hydro Pump': { power: 110, type: TYPES.WATER },
+    'Fire Blast': { power: 110, type: TYPES.FIRE },
+    'Solar Beam': { power: 120, type: TYPES.GRASS }
 };
 
 const POKEDEX = {
@@ -68,7 +75,21 @@ const POKEDEX = {
     11: { id: 11, name: 'Metapod', type: TYPES.BUG, baseHp: 50, atk: 20, def: 55, evolvesAt: 10, evolvesTo: 12, move: 'Tackle', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/11.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/11.png' },
     12: { id: 12, name: 'Butterfree', type: TYPES.BUG, baseHp: 60, atk: 45, def: 50, evolvesAt: null, evolvesTo: null, move: 'Bug Bite', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/12.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/12.png' },
     41: { id: 41, name: 'Zubat', type: TYPES.POISON, baseHp: 40, atk: 45, def: 35, evolvesAt: 22, evolvesTo: 42, move: 'Poison Sting', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/41.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/41.png' },
-    42: { id: 42, name: 'Golbat', type: TYPES.POISON, baseHp: 75, atk: 80, def: 70, evolvesAt: null, evolvesTo: null, move: 'Poison Sting', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/42.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/42.png' }
+    42: { id: 42, name: 'Golbat', type: TYPES.POISON, baseHp: 75, atk: 80, def: 70, evolvesAt: null, evolvesTo: null, move: 'Poison Sting', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/42.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/42.png' },
+
+    // New Additions
+    43: { id: 43, name: 'Oddish', type: TYPES.GRASS, baseHp: 45, atk: 50, def: 55, evolvesAt: 21, evolvesTo: 44, move: 'Vine Whip', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/43.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/43.png' },
+    44: { id: 44, name: 'Gloom', type: TYPES.GRASS, baseHp: 60, atk: 65, def: 70, evolvesAt: null, evolvesTo: null, move: 'Solar Beam', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/44.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/44.png' },
+    52: { id: 52, name: 'Meowth', type: TYPES.NORMAL, baseHp: 40, atk: 45, def: 35, evolvesAt: 28, evolvesTo: 53, move: 'Tackle', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/52.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/52.png' },
+    53: { id: 53, name: 'Persian', type: TYPES.NORMAL, baseHp: 65, atk: 70, def: 60, evolvesAt: null, evolvesTo: null, move: 'Tackle', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/53.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/53.png' },
+    54: { id: 54, name: 'Psyduck', type: TYPES.WATER, baseHp: 50, atk: 52, def: 48, evolvesAt: 33, evolvesTo: 55, move: 'Water Gun', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/54.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/54.png' },
+    55: { id: 55, name: 'Golduck', type: TYPES.WATER, baseHp: 80, atk: 82, def: 78, evolvesAt: null, evolvesTo: null, move: 'Hydro Pump', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/55.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/55.png' },
+    66: { id: 66, name: 'Machop', type: TYPES.NORMAL, baseHp: 70, atk: 80, def: 50, evolvesAt: 28, evolvesTo: 67, move: 'Karate Chop', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/66.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/66.png' },
+    67: { id: 67, name: 'Machoke', type: TYPES.NORMAL, baseHp: 80, atk: 100, def: 70, evolvesAt: null, evolvesTo: null, move: 'Karate Chop', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/67.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/67.png' },
+    72: { id: 72, name: 'Tentacool', type: TYPES.WATER, baseHp: 40, atk: 40, def: 35, evolvesAt: 30, evolvesTo: 73, move: 'Water Gun', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/72.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/72.png' },
+    73: { id: 73, name: 'Tentacruel', type: TYPES.WATER, baseHp: 80, atk: 70, def: 65, evolvesAt: null, evolvesTo: null, move: 'Hydro Pump', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/73.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/73.png' },
+    109: { id: 109, name: 'Koffing', type: TYPES.POISON, baseHp: 40, atk: 65, def: 95, evolvesAt: 35, evolvesTo: 110, move: 'Sludge', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/109.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/109.png' },
+    110: { id: 110, name: 'Weezing', type: TYPES.POISON, baseHp: 65, atk: 90, def: 120, evolvesAt: null, evolvesTo: null, move: 'Sludge', front: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/110.png', back: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/110.png' },
 };
 
 function generatePokemon(speciesId, level) {
