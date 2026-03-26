@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-
 const socket = io();
 
 // UI Elements
@@ -15,235 +13,108 @@ const expDisplay = document.getElementById('expDisplay');
 const expNeededDisplay = document.getElementById('expNeededDisplay');
 const gainExpBtn = document.getElementById('gainExpBtn');
 
-// Three.js Setup
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87CEEB); // Sky blue
-scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
-
-const camera = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
-// Instead of a canvas we already have, we can use the canvas or let three.js create one.
-// We'll replace the existing canvas.
-const oldCanvas = document.getElementById('gameCanvas');
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(800, 600);
-renderer.shadowMap.enabled = true;
-gameContainer.replaceChild(renderer.domElement, oldCanvas);
-
-// --- Procedural Textures ---
-function createGrassTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
-    const context = canvas.getContext('2d');
-    context.fillStyle = '#4CAF50';
-    context.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 1000; i++) {
-        context.fillStyle = Math.random() > 0.5 ? '#45a049' : '#388E3C';
-        context.fillRect(Math.random() * 256, Math.random() * 256, 4, 10);
-    }
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(20, 20);
-    return tex;
-}
-
-function createStoneTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
-    const context = canvas.getContext('2d');
-    context.fillStyle = '#555';
-    context.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 50; i++) {
-        context.fillStyle = Math.random() > 0.5 ? '#444' : '#666';
-        context.fillRect(Math.random() * 256, Math.random() * 256, Math.random()*40+10, Math.random()*20+10);
-    }
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(5, 5);
-    return tex;
-}
-
-function createBuildingTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
-    const context = canvas.getContext('2d');
-    context.fillStyle = '#b0c4de'; // light steel blue
-    context.fillRect(0, 0, 128, 128);
-    // Windows
-    context.fillStyle = '#ffff99';
-    for (let x = 10; x < 128; x += 30) {
-        for (let y = 10; y < 128; y += 40) {
-            if (Math.random() > 0.2) context.fillRect(x, y, 15, 20);
-        }
-    }
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    return tex;
-}
-
-function createPortalTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
-    const context = canvas.getContext('2d');
-    const gradient = context.createRadialGradient(64, 64, 0, 64, 64, 64);
-    gradient.addColorStop(0, 'white');
-    gradient.addColorStop(0.5, 'cyan');
-    gradient.addColorStop(1, 'blue');
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, 128, 128);
-    const tex = new THREE.CanvasTexture(canvas);
-    return tex;
-}
-
-const textures = {
-    grass: createGrassTexture(),
-    stone: createStoneTexture(),
-    building: createBuildingTexture(),
-    portal: createPortalTexture()
-};
+// 2D Canvas Setup
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
 // --- Maps & Environment ---
 let portals = [];
+let mapObjects = [];
+let backgroundColor = '#87CEEB';
 
 function clearMap() {
-    // Keep ambient light, remove other environment objects
-    const objectsToRemove = scene.children.filter(child => child.name === 'mapObj');
-    objectsToRemove.forEach(obj => {
-        scene.remove(obj);
-        if (obj.geometry) obj.geometry.dispose();
-        if (obj.material) {
-            if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
-            else obj.material.dispose();
-        }
-    });
+    mapObjects = [];
     portals = [];
 }
 
 function buildCityMap() {
     clearMap();
-    scene.background = new THREE.Color(0x87CEEB); // Sky blue
-    scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(20, 40, 20);
-    dirLight.castShadow = true;
-    dirLight.name = 'mapObj';
-    scene.add(dirLight);
-
-    // Ground
-    const groundGeo = new THREE.PlaneGeometry(200, 200);
-    const groundMat = new THREE.MeshStandardMaterial({ map: textures.grass });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    ground.name = 'mapObj';
-    scene.add(ground);
+    backgroundColor = '#87CEEB'; // Sky blue
 
     // Buildings
-    const bldgGeo = new THREE.BoxGeometry(10, 20, 10);
-    const bldgMat = new THREE.MeshStandardMaterial({ map: textures.building });
     for (let i = 0; i < 20; i++) {
-        const bldg = new THREE.Mesh(bldgGeo, bldgMat);
-        bldg.position.set((Math.random() - 0.5) * 150, 10, (Math.random() - 0.5) * 150);
-        bldg.castShadow = true;
-        bldg.receiveShadow = true;
-        bldg.name = 'mapObj';
-        scene.add(bldg);
+        mapObjects.push({
+            type: 'building',
+            x: Math.random() * 700 + 50,
+            y: Math.random() * 500 + 50,
+            w: 40,
+            h: 40,
+            color: '#b0c4de'
+        });
     }
 
     // Trees
-    const treeGeo = new THREE.CylinderGeometry(0, 1.5, 4, 8);
-    const treeTrunkGeo = new THREE.CylinderGeometry(0.3, 0.3, 1, 8);
-    const treeLeavesMat = new THREE.MeshStandardMaterial({ color: 0x2d8a36 });
-    const treeTrunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033 });
     for (let i = 0; i < 30; i++) {
-        const group = new THREE.Group();
-        const leaves = new THREE.Mesh(treeGeo, treeLeavesMat);
-        leaves.position.y = 2.5; leaves.castShadow = true;
-        const trunk = new THREE.Mesh(treeTrunkGeo, treeTrunkMat);
-        trunk.position.y = 0.5; trunk.castShadow = true;
-        group.add(leaves); group.add(trunk);
-        group.position.set((Math.random() - 0.5) * 180, 0, (Math.random() - 0.5) * 180);
-        group.name = 'mapObj';
-        scene.add(group);
+        mapObjects.push({
+            type: 'tree',
+            x: Math.random() * 750 + 25,
+            y: Math.random() * 550 + 25,
+            radius: 15,
+            color: '#2d8a36'
+        });
     }
 
     // Portal to Dungeon
-    createPortal(0, -20, 'dungeon', 'Enter Dungeon');
+    createPortal(400, 100, 'dungeon', 'Enter Dungeon');
 }
 
 function buildDungeonMap() {
     clearMap();
-    scene.background = new THREE.Color(0x111111); // Dark
-    scene.fog = new THREE.Fog(0x111111, 10, 50);
-
-    const pointLight = new THREE.PointLight(0xffaa00, 1, 50);
-    pointLight.position.set(0, 10, 0);
-    pointLight.name = 'mapObj';
-    scene.add(pointLight);
-
-    // Ground
-    const groundGeo = new THREE.PlaneGeometry(100, 100);
-    const groundMat = new THREE.MeshStandardMaterial({ map: textures.stone });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    ground.name = 'mapObj';
-    scene.add(ground);
+    backgroundColor = '#333333'; // Dark
 
     // Walls
-    const wallGeo = new THREE.BoxGeometry(100, 10, 5);
-    const wallMat = new THREE.MeshStandardMaterial({ map: textures.stone });
-
-    const wallN = new THREE.Mesh(wallGeo, wallMat); wallN.position.set(0, 5, -50); wallN.name='mapObj'; scene.add(wallN);
-    const wallS = new THREE.Mesh(wallGeo, wallMat); wallS.position.set(0, 5, 50); wallS.name='mapObj'; scene.add(wallS);
-
-    const wallEGeo = new THREE.BoxGeometry(5, 10, 100);
-    const wallE = new THREE.Mesh(wallEGeo, wallMat); wallE.position.set(50, 5, 0); wallE.name='mapObj'; scene.add(wallE);
-    const wallW = new THREE.Mesh(wallEGeo, wallMat); wallW.position.set(-50, 5, 0); wallW.name='mapObj'; scene.add(wallW);
+    mapObjects.push({ type: 'wall', x: 0, y: 0, w: 800, h: 40, color: '#555' }); // Top
+    mapObjects.push({ type: 'wall', x: 0, y: 560, w: 800, h: 40, color: '#555' }); // Bottom
+    mapObjects.push({ type: 'wall', x: 0, y: 0, w: 40, h: 600, color: '#555' }); // Left
+    mapObjects.push({ type: 'wall', x: 760, y: 0, w: 40, h: 600, color: '#555' }); // Right
 
     // Portal to City
-    createPortal(0, 20, 'city', 'Exit to City');
+    createPortal(400, 500, 'city', 'Exit to City');
 }
 
-function createPortal(x, z, targetMap, label) {
-    const geo = new THREE.CylinderGeometry(2, 2, 0.5, 16);
-    const mat = new THREE.MeshBasicMaterial({ map: textures.portal });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(x, 0.25, z);
-    mesh.name = 'mapObj';
-    scene.add(mesh);
-    portals.push({ mesh, targetMap, label, x, z });
-
-    // Portal Label
-    const div = document.createElement('div');
-    div.className = 'name-tag portal-tag';
-    div.innerText = label;
-    div.style.position = 'absolute';
-    div.style.color = 'cyan';
-    div.style.textShadow = '1px 1px 2px black';
-    div.style.fontFamily = 'Arial';
-    div.style.fontSize = '12px';
-    div.style.fontWeight = 'bold';
-    div.style.pointerEvents = 'none';
-    document.body.appendChild(div);
-    portals[portals.length-1].tag = div;
+function createPortal(x, y, targetMap, label) {
+    portals.push({ x, y, radius: 20, targetMap, label });
 }
 
-// Lighting (Global Ambient)
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-scene.add(ambientLight);
+function drawMap() {
+    // Background
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, 800, 600);
+
+    // Map Objects
+    for (const obj of mapObjects) {
+        ctx.fillStyle = obj.color;
+        if (obj.type === 'building' || obj.type === 'wall') {
+            ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+        } else if (obj.type === 'tree') {
+            ctx.beginPath();
+            ctx.arc(obj.x, obj.y, obj.radius, 0, Math.PI * 2);
+            ctx.fill();
+            // trunk
+            ctx.fillStyle = '#5c4033';
+            ctx.fillRect(obj.x - 4, obj.y + obj.radius - 5, 8, 10);
+        }
+    }
+
+    // Portals
+    for (const portal of portals) {
+        ctx.fillStyle = 'cyan';
+        ctx.beginPath();
+        ctx.arc(portal.x, portal.y, portal.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'blue';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(portal.label, portal.x, portal.y - portal.radius - 5);
+    }
+}
 
 // Game State
 let players = {};
-let playerMeshes = {}; // To store 3D models of players
-let nameTags = {}; // HTML elements for names/levels
 let myId = null;
 let currentRoomId = null;
 let currentMap = null;
@@ -281,58 +152,13 @@ function joinGame(roomId) {
     gameContainer.style.display = 'block';
     uiOverlay.style.display = 'block'; // Show EXP button
 
-    renderer.setAnimationLoop(animate);
-}
-
-// --- Player Character Creation ---
-function createPlayerMesh(colorHex) {
-    const group = new THREE.Group();
-
-    // Body
-    const bodyGeo = new THREE.BoxGeometry(1, 1, 1);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: colorHex });
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.position.y = 0.5;
-    body.castShadow = true;
-    group.add(body);
-
-    // Head (Hat)
-    const hatGeo = new THREE.BoxGeometry(0.8, 0.2, 0.8);
-    const hatMat = new THREE.MeshStandardMaterial({ color: 0xff0000 }); // Red hat
-    const hat = new THREE.Mesh(hatGeo, hatMat);
-    hat.position.y = 1.1;
-    hat.castShadow = true;
-    group.add(hat);
-
-    return group;
-}
-
-function createNameTag(id) {
-    const div = document.createElement('div');
-    div.className = 'name-tag';
-    div.style.position = 'absolute';
-    div.style.color = 'white';
-    div.style.textShadow = '1px 1px 2px black, -1px -1px 2px black';
-    div.style.fontFamily = 'Arial, sans-serif';
-    div.style.fontSize = '12px';
-    div.style.fontWeight = 'bold';
-    div.style.pointerEvents = 'none'; // Don't block clicks
-    document.body.appendChild(div);
-    return div;
+    requestAnimationFrame(animate);
 }
 
 // --- Socket Events ---
 socket.on('connect', () => { myId = socket.id; });
 
 socket.on('currentPlayers', (serverPlayers) => {
-    // Clear old
-    for (let id in playerMeshes) {
-        scene.remove(playerMeshes[id]);
-        if (nameTags[id]) nameTags[id].remove();
-    }
-    playerMeshes = {};
-    nameTags = {};
-
     players = serverPlayers;
 
     if (players[myId]) {
@@ -340,19 +166,11 @@ socket.on('currentPlayers', (serverPlayers) => {
         loadMap(currentMap);
     }
 
-    for (const id in players) {
-        if (players[id].map === currentMap) {
-            addPlayerToScene(players[id]);
-        }
-    }
     updateMyUI();
 });
 
 socket.on('newPlayer', (playerInfo) => {
     players[playerInfo.id] = playerInfo;
-    if (playerInfo.map === currentMap) {
-        addPlayerToScene(playerInfo);
-    }
 });
 
 socket.on('playerMoved', (playerInfo) => {
@@ -367,36 +185,11 @@ socket.on('playerMapChanged', (mapInfo) => {
         players[mapInfo.id].map = mapInfo.map;
         players[mapInfo.id].x = mapInfo.x;
         players[mapInfo.id].y = mapInfo.y;
-
-        // If someone else changed map, handle their mesh visibility
-        if (mapInfo.id !== myId) {
-            if (mapInfo.map === currentMap) {
-                // They entered our map
-                if (!playerMeshes[mapInfo.id]) addPlayerToScene(players[mapInfo.id]);
-            } else {
-                // They left our map
-                if (playerMeshes[mapInfo.id]) {
-                    scene.remove(playerMeshes[mapInfo.id]);
-                    delete playerMeshes[mapInfo.id];
-                }
-                if (nameTags[mapInfo.id]) {
-                    nameTags[mapInfo.id].style.display = 'none';
-                }
-            }
-        }
     }
 });
 
 socket.on('playerDisconnected', (playerId) => {
     delete players[playerId];
-    if (playerMeshes[playerId]) {
-        scene.remove(playerMeshes[playerId]);
-        delete playerMeshes[playerId];
-    }
-    if (nameTags[playerId]) {
-        nameTags[playerId].remove();
-        delete nameTags[playerId];
-    }
 });
 
 // Level system networking
@@ -414,44 +207,9 @@ socket.on('playerStatsUpdate', (statsInfo) => {
     }
 });
 
-function addPlayerToScene(p) {
-    const mesh = createPlayerMesh(p.color);
-
-    // Server sends 2D coordinates (x, y)
-    // We map Server.X to 3D.X, and Server.Y to 3D.Z
-    // Server coordinates are 0-800. Let's map them to roughly -40 to 40
-    mesh.position.x = (p.x / 10) - 40;
-    mesh.position.z = (p.y / 10) - 30;
-
-    scene.add(mesh);
-    playerMeshes[p.id] = mesh;
-
-    nameTags[p.id] = createNameTag(p.id);
-}
-
 function loadMap(mapName) {
-    // Clear old portal tags
-    portals.forEach(p => {
-        if (p.tag && p.tag.parentNode) {
-            p.tag.parentNode.removeChild(p.tag);
-        }
-    });
-
     if (mapName === 'city') buildCityMap();
     else if (mapName === 'dungeon') buildDungeonMap();
-
-    // Re-add players in THIS map
-    for (let id in playerMeshes) {
-        scene.remove(playerMeshes[id]);
-        if (nameTags[id]) nameTags[id].style.display = 'none';
-    }
-    playerMeshes = {};
-    for (const id in players) {
-        if (players[id].map === currentMap) {
-            addPlayerToScene(players[id]);
-            if (nameTags[id]) nameTags[id].style.display = 'block';
-        }
-    }
 }
 
 function updateMyUI() {
@@ -486,13 +244,12 @@ function animate() {
         socket.emit('playerMovement', { x: me.x, y: me.y });
 
         // Portal Collision Check
-        const player3DX = (me.x / 10) - 40;
-        const player3DZ = (me.y / 10) - 30;
         for (const portal of portals) {
-            const dx = player3DX - portal.x;
-            const dz = player3DZ - portal.z;
-            const distSq = dx * dx + dz * dz;
-            if (distSq < 4) { // within radius 2
+            const dx = me.x - portal.x;
+            const dy = me.y - portal.y;
+            const distSq = dx * dx + dy * dy;
+            // The portal radius is 20, player is 20x20
+            if (distSq < (portal.radius + 10) * (portal.radius + 10)) {
                 // Teleport!
                 currentMap = portal.targetMap;
 
@@ -513,75 +270,36 @@ function animate() {
         }
     }
 
-    // Sync 3D meshes to logical positions
+    // Clear Canvas and Draw Map
+    ctx.clearRect(0, 0, 800, 600);
+    drawMap();
+
+    // Draw Players
     for (const id in players) {
-        if (playerMeshes[id] && players[id].map === currentMap) {
+        if (players[id].map === currentMap) {
             const p = players[id];
 
-            // Map 2D -> 3D
-            const targetX = (p.x / 10) - 40;
-            const targetZ = (p.y / 10) - 30;
+            // Player body
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x - 10, p.y - 10, 20, 20);
 
-            // Simple lerp for smooth movement
-            playerMeshes[id].position.x += (targetX - playerMeshes[id].position.x) * 0.2;
-            playerMeshes[id].position.z += (targetZ - playerMeshes[id].position.z) * 0.2;
+            // Red Hat
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(p.x - 8, p.y - 15, 16, 5);
 
-            // Update Name Tag Positions
-            if (nameTags[id]) {
-                const vector = new THREE.Vector3();
-                vector.setFromMatrixPosition(playerMeshes[id].matrixWorld);
-                vector.y += 2; // Above head
-
-                vector.project(camera);
-
-                // Convert to CSS coords
-                const gameRect = gameContainer.getBoundingClientRect();
-                const x = (vector.x * .5 + .5) * gameRect.width + gameRect.left;
-                const y = (vector.y * -.5 + .5) * gameRect.height + gameRect.top;
-
-                nameTags[id].style.left = `${x}px`;
-                nameTags[id].style.top = `${y}px`;
-
-                const lvl = p.level || 1;
-                nameTags[id].innerText = `${id === myId ? 'You' : 'Player'} (Lv.${lvl})`;
-                nameTags[id].style.transform = 'translate(-50%, -50%)';
-
-                // Hide if behind camera
-                if (vector.z > 1) {
-                    nameTags[id].style.display = 'none';
-                } else {
-                    nameTags[id].style.display = 'block';
-                }
-            }
+            // Name Tag
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            // Black outline
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'black';
+            const lvl = p.level || 1;
+            const text = `${id === myId ? 'You' : 'Player'} (Lv.${lvl})`;
+            ctx.strokeText(text, p.x, p.y - 20);
+            ctx.fillText(text, p.x, p.y - 20);
         }
     }
 
-    // Update Portal Tags
-    for (const portal of portals) {
-        if (portal.tag && portal.mesh) {
-            const vector = new THREE.Vector3();
-            vector.setFromMatrixPosition(portal.mesh.matrixWorld);
-            vector.y += 1.5;
-            vector.project(camera);
-            const gameRect = gameContainer.getBoundingClientRect();
-            const x = (vector.x * .5 + .5) * gameRect.width + gameRect.left;
-            const y = (vector.y * -.5 + .5) * gameRect.height + gameRect.top;
-            portal.tag.style.left = `${x}px`;
-            portal.tag.style.top = `${y}px`;
-            portal.tag.style.transform = 'translate(-50%, -50%)';
-            if (vector.z > 1) portal.tag.style.display = 'none';
-            else portal.tag.style.display = 'block';
-        }
-    }
-
-    // Camera follow local player (Third person view)
-    if (playerMeshes[myId]) {
-        const myMesh = playerMeshes[myId];
-        camera.position.x = myMesh.position.x;
-        camera.position.y = 10;
-        camera.position.z = myMesh.position.z + 15;
-        camera.lookAt(myMesh.position.x, 0, myMesh.position.z);
-    }
-
-    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
 }
