@@ -45,6 +45,16 @@ sprites.grass = createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
     for (let i = 0; i < 10; i++) {
         c.fillRect(Math.floor(Math.random() * (w/4)) * 4, Math.floor(Math.random() * (h/4)) * 4, 4, 4);
     }
+    // Random flowers
+    if (Math.random() > 0.8) {
+        c.fillStyle = '#FF69B4'; // Pink flower
+        c.fillRect(16, 16, 4, 4);
+        c.fillStyle = '#FFF';
+        c.fillRect(16, 12, 4, 4);
+        c.fillRect(16, 20, 4, 4);
+        c.fillRect(12, 16, 4, 4);
+        c.fillRect(20, 16, 4, 4);
+    }
 });
 
 // Generate Tree Sprite
@@ -84,6 +94,42 @@ sprites.path = createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
             c.fillRect(Math.floor(Math.random() * (w/2)) * 2, Math.floor(Math.random() * (h/2)) * 2, 2, 2);
         }
     }
+});
+
+// Generate Water Animated Frames
+sprites.water = [];
+for (let frame = 0; frame < 3; frame++) {
+    sprites.water.push(createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
+        c.fillStyle = '#4169E1'; // Royal blue
+        c.fillRect(0, 0, w, h);
+        c.fillStyle = '#87CEFA'; // Light blue wave highlights
+        for (let y = 0; y < h; y += 8) {
+            for (let x = 0; x < w; x += 8) {
+                if ((x + y + frame * 8) % 16 === 0) {
+                    c.fillRect(x, y, 4, 2);
+                    c.fillRect(x + 4, y + 2, 4, 2);
+                }
+            }
+        }
+    }));
+}
+
+// Generate Bridge Tile
+sprites.bridge = createPixelSprite(TILE_SIZE, TILE_SIZE, (c, w, h) => {
+    // Water underneath
+    c.fillStyle = '#4169E1';
+    c.fillRect(0, 0, w, h);
+    // Wood planks
+    c.fillStyle = '#8B4513';
+    c.fillRect(0, 8, w, 24);
+    c.fillStyle = '#A0522D'; // Wood lines
+    for (let i = 0; i < w; i += 8) {
+        c.fillRect(i, 8, 2, 24);
+    }
+    // Rails
+    c.fillStyle = '#5C4033';
+    c.fillRect(0, 4, w, 4);
+    c.fillRect(0, 32, w, 4);
 });
 
 // Generate Building/House Tile (Takes up 2x2 grid)
@@ -144,10 +190,47 @@ sprites.player = createPixelSprite(24, 32, (c, w, h) => {
     // OR we draw the player directly in the render loop using this style)
 });
 
-function drawPlayerSprite(ctx, x, y, color) {
-    // Shadow
+function drawPlayerSprite(ctx, x, y, color, facing = 'down', walkFrame = 0) {
+    // Determine leg offset based on walk animation
+    const cycle = Math.floor(walkFrame) % 4;
+    let legOffset1 = 0;
+    let legOffset2 = 0;
+
+    // Simple bobbing and leg swing
+    if (cycle === 1) { legOffset1 = -2; legOffset2 = 2; }
+    if (cycle === 3) { legOffset1 = 2; legOffset2 = -2; }
+
+    const isWalking = cycle === 1 || cycle === 3;
+    const yBob = isWalking ? -1 : 0;
+
+    // Draw Shadow
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath(); ctx.ellipse(x, y + 12, 12, 6, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x, y + 14, 12, 6, 0, 0, Math.PI*2); ctx.fill();
+
+    y += yBob; // Apply bobbing to rest of sprite
+
+    // Legs
+    ctx.fillStyle = '#1e90ff'; // Blue jeans
+    if (facing === 'left' || facing === 'right') {
+        const dir = facing === 'left' ? -1 : 1;
+        ctx.fillRect(x - 4 + legOffset1*dir, y + 8, 4, 6);
+        ctx.fillRect(x + legOffset2*dir, y + 8, 4, 6);
+    } else {
+        ctx.fillRect(x - 6, y + 8 + legOffset1, 4, 6);
+        ctx.fillRect(x + 2, y + 8 + legOffset2, 4, 6);
+    }
+
+    // Backpack (draw behind if facing up)
+    if (facing === 'up') {
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(x - 8, y - 2, 16, 10);
+    } else if (facing === 'left') {
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(x + 4, y - 4, 8, 10);
+    } else if (facing === 'right') {
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(x - 12, y - 4, 8, 10);
+    }
 
     // Body (Rectangle with slightly rounded look)
     ctx.fillStyle = color;
@@ -157,20 +240,40 @@ function drawPlayerSprite(ctx, x, y, color) {
     ctx.fillStyle = '#FFE4C4'; // Skin tone
     ctx.beginPath(); ctx.arc(x, y - 12, 10, 0, Math.PI*2); ctx.fill();
 
-    // Eyes
+    // Eyes (Only visible if facing down or sideways)
     ctx.fillStyle = '#000';
-    ctx.fillRect(x - 4, y - 14, 2, 2);
-    ctx.fillRect(x + 2, y - 14, 2, 2);
+    if (facing === 'down') {
+        ctx.fillRect(x - 4, y - 14, 2, 2);
+        ctx.fillRect(x + 2, y - 14, 2, 2);
+    } else if (facing === 'left') {
+        ctx.fillRect(x - 6, y - 14, 2, 2);
+    } else if (facing === 'right') {
+        ctx.fillRect(x + 4, y - 14, 2, 2);
+    }
 
     // Hat (Classic Red/White cap)
     ctx.fillStyle = '#FF0000';
     ctx.beginPath(); ctx.arc(x, y - 14, 10, Math.PI, Math.PI*2); ctx.fill();
     ctx.fillStyle = '#FFF';
-    ctx.fillRect(x - 10, y - 14, 20, 3);
 
-    // Backpack
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(x - 12, y - 4, 4, 10);
+    // Hat Brim based on direction
+    if (facing === 'down') {
+        ctx.fillRect(x - 10, y - 14, 20, 3);
+    } else if (facing === 'up') {
+        // No brim visible
+    } else if (facing === 'left') {
+        ctx.fillRect(x - 12, y - 14, 12, 3);
+    } else if (facing === 'right') {
+        ctx.fillRect(x, y - 14, 12, 3);
+    }
+
+    // Backpack (draw in front if facing down)
+    if (facing === 'down') {
+        // Just strap details maybe? Left it out for now to keep it simple, or draw small straps
+        ctx.fillStyle = '#A0522D';
+        ctx.fillRect(x - 8, y - 6, 2, 10);
+        ctx.fillRect(x + 6, y - 6, 2, 10);
+    }
 }
 
 
@@ -181,7 +284,7 @@ let mapObjects = [];
 const MAP_COLS = 20; // 800 / 40
 const MAP_ROWS = 15; // 600 / 40
 
-// 0: grass, 1: path, 2: stoneFloor, 3: wall
+// 0: grass, 1: path, 2: stoneFloor, 3: wall, 4: water, 5: bridge
 function clearMap() {
     mapGrid = [];
     portals = [];
@@ -209,9 +312,24 @@ function buildCityMap() {
         mapGrid[9][c] = 1;
     }
 
+    // Add a River
+    for(let r=0; r<MAP_ROWS; r++) {
+        mapGrid[r][16] = 4; // Water
+        mapGrid[r][17] = 4; // Water
+    }
+
+    // Bridge over river
+    mapGrid[8][16] = 5;
+    mapGrid[8][17] = 5;
+    mapGrid[9][16] = 5;
+    mapGrid[9][17] = 5;
+    // Connect path to bridge
+    mapGrid[8][15] = 1;
+    mapGrid[9][15] = 1;
+
     // Add Houses
     mapObjects.push({ type: 'house', x: 2 * TILE_SIZE, y: 2 * TILE_SIZE });
-    mapObjects.push({ type: 'house', x: 14 * TILE_SIZE, y: 2 * TILE_SIZE });
+    mapObjects.push({ type: 'house', x: 12 * TILE_SIZE, y: 2 * TILE_SIZE });
     mapObjects.push({ type: 'house', x: 2 * TILE_SIZE, y: 10 * TILE_SIZE });
 
     // Add Trees (Forest border)
@@ -268,6 +386,9 @@ function createPortal(x, y, targetMap, label) {
 }
 
 function drawMap() {
+    const time = Date.now();
+    const waterFrame = Math.floor(time / 400) % sprites.water.length;
+
     // Draw Base Grid
     for(let r=0; r<MAP_ROWS; r++) {
         for(let c=0; c<MAP_COLS; c++) {
@@ -279,6 +400,8 @@ function drawMap() {
             else if (tile === 1) ctx.drawImage(sprites.path, px, py);
             else if (tile === 2) ctx.drawImage(sprites.stoneFloor, px, py);
             else if (tile === 3) ctx.drawImage(sprites.wall, px, py);
+            else if (tile === 4) ctx.drawImage(sprites.water[waterFrame], px, py);
+            else if (tile === 5) ctx.drawImage(sprites.bridge, px, py);
         }
     }
 
@@ -374,12 +497,35 @@ socket.on('currentPlayers', (serverPlayers) => {
 
 socket.on('newPlayer', (playerInfo) => {
     players[playerInfo.id] = playerInfo;
+    players[playerInfo.id].walkFrame = 0;
+    players[playerInfo.id].facing = 'down';
+    players[playerInfo.id].lastX = playerInfo.x;
+    players[playerInfo.id].lastY = playerInfo.y;
 });
 
 socket.on('playerMoved', (playerInfo) => {
     if (players[playerInfo.id]) {
-        players[playerInfo.id].x = playerInfo.x;
-        players[playerInfo.id].y = playerInfo.y; // 'y' from server is actually Z in 3D world (top-down view)
+        const p = players[playerInfo.id];
+
+        // Calculate direction for animation
+        const dx = playerInfo.x - p.x;
+        const dy = playerInfo.y - p.y;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            p.facing = dx > 0 ? 'right' : 'left';
+        } else if (Math.abs(dy) > 0) {
+            p.facing = dy > 0 ? 'down' : 'up';
+        }
+
+        // Advance animation frame if moving
+        if (Math.abs(dx) > 0 || Math.abs(dy) > 0) {
+            p.walkFrame = (p.walkFrame || 0) + 0.2;
+        } else {
+            p.walkFrame = 0;
+        }
+
+        p.x = playerInfo.x;
+        p.y = playerInfo.y;
     }
 });
 
@@ -432,10 +578,10 @@ function animate() {
     const oldX = me.x;
     const oldY = me.y;
 
-    if (keys.w || keys.ArrowUp) me.y -= SPEED * 10;
-    if (keys.s || keys.ArrowDown) me.y += SPEED * 10;
-    if (keys.a || keys.ArrowLeft) me.x -= SPEED * 10;
-    if (keys.d || keys.ArrowRight) me.x += SPEED * 10;
+    if (keys.w || keys.ArrowUp) { me.y -= SPEED * 10; me.facing = 'up'; }
+    if (keys.s || keys.ArrowDown) { me.y += SPEED * 10; me.facing = 'down'; }
+    if (keys.a || keys.ArrowLeft) { me.x -= SPEED * 10; me.facing = 'left'; }
+    if (keys.d || keys.ArrowRight) { me.x += SPEED * 10; me.facing = 'right'; }
 
     // Boundary roughly matching our 3D plane scale
     if (me.x < 0) me.x = 0;
@@ -444,6 +590,7 @@ function animate() {
     if (me.y > 600) me.y = 600;
 
     if (me.x !== oldX || me.y !== oldY) {
+        me.walkFrame = (me.walkFrame || 0) + 0.2;
         socket.emit('playerMovement', { x: me.x, y: me.y });
 
         // Portal Collision Check
@@ -482,7 +629,7 @@ function animate() {
     playersInMap.sort((a,b) => a.y - b.y);
 
     for (const p of playersInMap) {
-        drawPlayerSprite(ctx, p.x, p.y, p.color);
+        drawPlayerSprite(ctx, p.x, p.y, p.color, p.facing || 'down', p.walkFrame || 0);
 
         // Name Tag
         ctx.fillStyle = 'white';
