@@ -7,39 +7,80 @@ const io = new Server(server);
 
 app.use(express.static('public'));
 
-const players = {};
+const rooms = {};
+
+function generateRoomId() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
 io.on('connection', (socket) => {
   console.log('a user connected:', socket.id);
 
-  // Initialize new player
-  players[socket.id] = {
-    x: Math.floor(Math.random() * 500) + 50,
-    y: Math.floor(Math.random() * 500) + 50,
-    color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'), // Random color for "pokemon"
-    id: socket.id
-  };
+  socket.on('createRoom', () => {
+    const roomId = generateRoomId();
+    rooms[roomId] = {
+      players: {}
+    };
+    socket.join(roomId);
+    socket.roomId = roomId;
 
-  // Send all current players to the new player
-  socket.emit('currentPlayers', players);
+    // Initialize new player
+    rooms[roomId].players[socket.id] = {
+      x: 100,
+      y: 100,
+      color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
+      id: socket.id
+    };
 
-  // Tell all other players about the new player
-  socket.broadcast.emit('newPlayer', players[socket.id]);
+    socket.emit('roomCreated', roomId);
+    socket.emit('currentPlayers', rooms[roomId].players);
+  });
+
+  socket.on('joinRoom', (roomId) => {
+    roomId = roomId.toUpperCase();
+    if (rooms[roomId]) {
+      socket.join(roomId);
+      socket.roomId = roomId;
+
+      // Initialize new player
+      rooms[roomId].players[socket.id] = {
+        x: Math.floor(Math.random() * 500) + 50,
+        y: Math.floor(Math.random() * 500) + 50,
+        color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
+        id: socket.id
+      };
+
+      socket.emit('roomJoined', roomId);
+      // Send all current players to the new player
+      socket.emit('currentPlayers', rooms[roomId].players);
+      // Tell all other players in the room about the new player
+      socket.to(roomId).emit('newPlayer', rooms[roomId].players[socket.id]);
+    } else {
+      socket.emit('error', 'Room not found');
+    }
+  });
 
   // Listen for player movement
   socket.on('playerMovement', (movementData) => {
-    if (players[socket.id]) {
-      players[socket.id].x = movementData.x;
-      players[socket.id].y = movementData.y;
-      // Broadcast new position to everyone else
-      socket.broadcast.emit('playerMoved', players[socket.id]);
+    if (socket.roomId && rooms[socket.roomId] && rooms[socket.roomId].players[socket.id]) {
+      rooms[socket.roomId].players[socket.id].x = movementData.x;
+      rooms[socket.roomId].players[socket.id].y = movementData.y;
+      // Broadcast new position to everyone else in the room
+      socket.to(socket.roomId).emit('playerMoved', rooms[socket.roomId].players[socket.id]);
     }
   });
 
   socket.on('disconnect', () => {
     console.log('user disconnected:', socket.id);
-    delete players[socket.id];
-    io.emit('playerDisconnected', socket.id);
+    if (socket.roomId && rooms[socket.roomId]) {
+      delete rooms[socket.roomId].players[socket.id];
+      socket.to(socket.roomId).emit('playerDisconnected', socket.id);
+
+      // Clean up empty rooms
+      if (Object.keys(rooms[socket.roomId].players).length === 0) {
+        delete rooms[socket.roomId];
+      }
+    }
   });
 });
 

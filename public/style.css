@@ -10,6 +10,49 @@ body {
     font-family: 'Press Start 2P', monospace, sans-serif;
 }
 
+#lobby-container {
+    background-color: #f8f8f8;
+    border: 4px solid #333;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+#lobby-container h1 {
+    color: #cc0000;
+    margin-top: 0;
+    text-shadow: 2px 2px #ffcccc;
+}
+
+.lobby-controls button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: 2px solid #333;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 16px;
+    margin: 5px;
+}
+
+.lobby-controls button:hover {
+    background-color: #45a049;
+}
+
+.lobby-controls input {
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #ccc;
+    font-family: inherit;
+}
+
+#lobbyMessage {
+    color: #333;
+    margin-top: 20px;
+    font-weight: bold;
+}
+
 #game-container {
     border: 4px solid #fff;
     border-radius: 8px;

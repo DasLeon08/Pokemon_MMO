@@ -7,7 +7,18 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container">
+    <div id="lobby-container">
+        <h1>Pokemon MMO</h1>
+        <div class="lobby-controls">
+            <button id="createRoomBtn">Create Room</button>
+            <br><br>
+            <input type="text" id="roomInput" placeholder="Room ID">
+            <button id="joinRoomBtn">Join Room</button>
+        </div>
+        <p id="lobbyMessage"></p>
+    </div>
+
+    <div id="game-container" style="display: none;">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
     </div>
 
