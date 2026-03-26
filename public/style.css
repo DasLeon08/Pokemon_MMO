@@ -83,21 +83,6 @@ canvas {
     font-size: 12px;
 }
 
-#gainExpBtn {
-    background-color: #f44336;
-    color: white;
-    padding: 10px 15px;
-    border: 2px solid white;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 12px;
-    border-radius: 5px;
-}
-
-#gainExpBtn:hover {
-    background-color: #da190b;
-}
-
 #battle-container {
     position: absolute;
     top: 0;

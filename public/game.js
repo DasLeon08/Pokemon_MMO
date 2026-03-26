@@ -11,7 +11,6 @@ const lobbyMessage = document.getElementById('lobbyMessage');
 const levelDisplay = document.getElementById('levelDisplay');
 const expDisplay = document.getElementById('expDisplay');
 const expNeededDisplay = document.getElementById('expNeededDisplay');
-const gainExpBtn = document.getElementById('gainExpBtn');
 
 // 2D Canvas Setup
 const canvas = document.getElementById('gameCanvas');
@@ -149,8 +148,61 @@ function buildCityMap() {
     mapObjects.push({ type: 'tree', x: 6 * TILE_SIZE, y: 5 * TILE_SIZE });
     mapObjects.push({ type: 'tree', x: 17 * TILE_SIZE, y: 13 * TILE_SIZE });
 
-    // Portal to Dungeon
+    // Add a normal Trainer
+    mapObjects.push({
+        type: 'trainer', id: 'trainer_bugcatcher', name: 'Bug Catcher Tim',
+        x: 10 * TILE_SIZE, y: 15 * TILE_SIZE,
+        team: [generatePokemon(10, 3), generatePokemon(11, 4)]
+    });
+
+    // Portals
     createPortal(400, 100, 'dungeon', 'Dungeon Cave');
+    createPortal(700, 450, 'gym', 'Pewter Gym');
+}
+
+function buildGymMap() {
+    clearMap();
+    // Fill with stone floor
+    for(let r=0; r<MAP_ROWS; r++) {
+        let row = [];
+        for(let c=0; c<MAP_COLS; c++) {
+            row.push(2);
+        }
+        mapGrid.push(row);
+    }
+
+    // Gym Path
+    for(let r=3; r<MAP_ROWS; r++) {
+        mapGrid[r][11] = 1;
+        mapGrid[r][12] = 1;
+        mapGrid[r][13] = 1;
+    }
+
+    // Add Walls (Border)
+    for(let c=0; c<MAP_COLS; c++) {
+        mapGrid[0][c] = 3;
+        mapGrid[MAP_ROWS - 1][c] = 3;
+    }
+    for(let r=0; r<MAP_ROWS; r++) {
+        mapGrid[r][0] = 3;
+        mapGrid[r][MAP_COLS - 1] = 3;
+    }
+
+    // Add Gym Trainers
+    mapObjects.push({
+        type: 'trainer', id: 'gym_trainer_1', name: 'Camper Liam',
+        x: 9 * TILE_SIZE, y: 12 * TILE_SIZE,
+        team: [generatePokemon(74, 10)] // Geodude
+    });
+
+    mapObjects.push({
+        type: 'trainer', id: 'gym_boss_brock', name: 'Gym Leader Brock',
+        x: 12 * TILE_SIZE, y: 4 * TILE_SIZE,
+        badge: true,
+        team: [generatePokemon(74, 12), generatePokemon(75, 14)] // Geodude, Graveler
+    });
+
+    createPortal(400, 500, 'city', 'Exit');
 }
 
 function buildDungeonMap() {
@@ -216,6 +268,10 @@ function drawMap() {
             drawTile('tree', obj.x, obj.y - TILE_SIZE);
         } else if (obj.type === 'house') {
             drawTile('house', obj.x, obj.y - TILE_SIZE * 2);
+        } else if (obj.type === 'trainer') {
+            if (!defeatedTrainers[obj.id]) {
+                drawPlayerSprite(ctx, obj.x + TILE_SIZE/2, obj.y + TILE_SIZE/2, 'red', 'down', 0);
+            }
         }
     }
 
@@ -270,6 +326,14 @@ let myTeam = [];
 let wildPokemon = null;
 let activePokemon = null;
 let turnActionLocked = false;
+let defeatedTrainers = {};
+let myBadges = 0;
+
+// Trainer Battle State
+let opponentIsTrainer = false;
+let opponentTeam = [];
+let opponentIndex = 0;
+let opponentTrainer = null;
 
 const SPEED = 0.2;
 
@@ -283,15 +347,27 @@ const playerNameLvl = document.getElementById('player-name-level');
 const wildHpFill = document.getElementById('wild-hp-fill');
 const playerHpFill = document.getElementById('player-hp-fill');
 
-function startBattle() {
+function startBattle(trainer = null) {
     inBattle = true;
     turnActionLocked = false;
+    opponentIsTrainer = trainer !== null;
+    opponentTrainer = trainer;
+    opponentIndex = 0;
 
-    // Generate Wild Pokemon (Level 2 to 5)
-    const speciesIds = [1, 4, 7, 16, 19]; // Random early pokemon
-    const wildId = speciesIds[Math.floor(Math.random() * speciesIds.length)];
-    const wildLvl = Math.floor(Math.random() * 4) + 2;
-    wildPokemon = generatePokemon(wildId, wildLvl);
+    if (opponentIsTrainer) {
+        // Load trainer's team
+        // Deep copy so we don't modify the map object template
+        opponentTeam = JSON.parse(JSON.stringify(trainer.team));
+        wildPokemon = opponentTeam[0]; // 'wildPokemon' is actually the opponent pokemon
+        document.getElementById('btn-catch').style.display = 'none'; // Can't catch trainer pokemon
+    } else {
+        // Generate Wild Pokemon (Level 2 to 5)
+        const speciesIds = [1, 4, 7, 16, 19]; // Random early pokemon
+        const wildId = speciesIds[Math.floor(Math.random() * speciesIds.length)];
+        const wildLvl = Math.floor(Math.random() * 4) + 2;
+        wildPokemon = generatePokemon(wildId, wildLvl);
+        document.getElementById('btn-catch').style.display = 'inline-block';
+    }
 
     // Ensure player has a starter
     if (myTeam.length === 0) {
@@ -303,7 +379,12 @@ function startBattle() {
 
     updateBattleUI();
     battleContainer.style.display = 'flex';
-    battleMessage.innerText = `A wild ${wildPokemon.name} appeared!`;
+
+    if (opponentIsTrainer) {
+        battleMessage.innerText = `Trainer ${trainer.name} wants to battle! They sent out ${wildPokemon.name}!`;
+    } else {
+        battleMessage.innerText = `A wild ${wildPokemon.name} appeared!`;
+    }
 }
 
 function updateBattleUI() {
@@ -335,8 +416,13 @@ function processTurn(action) {
     turnActionLocked = true;
 
     if (action === 'run') {
-        battleMessage.innerText = "Got away safely!";
-        endBattle();
+        if (opponentIsTrainer) {
+            battleMessage.innerText = "You can't run from a Trainer battle!";
+            setTimeout(() => { turnActionLocked = false; }, 1500);
+        } else {
+            battleMessage.innerText = "Got away safely!";
+            endBattle();
+        }
         return;
     }
 
@@ -367,7 +453,8 @@ function processTurn(action) {
 
         if (wildPokemon.hp <= 0) {
             wildPokemon.hp = 0;
-            battleMessage.innerText = `Wild ${wildPokemon.name} fainted!`;
+            const prefix = opponentIsTrainer ? "Opponent's" : "Wild";
+            battleMessage.innerText = `${prefix} ${wildPokemon.name} fainted!`;
             setTimeout(awardExp, 1000);
             return;
         }
@@ -431,12 +518,44 @@ function awardExp() {
                     activePokemon.name = evoName;
                     activePokemon.move = POKEDEX[dexData.evolvesTo].move;
                     updateBattleUI();
-                    endBattle();
+                    checkBattleContinue();
                 }, 1500);
             } else {
-                endBattle();
+                checkBattleContinue();
             }
         }, 1500);
+    } else {
+        checkBattleContinue();
+    }
+}
+
+function checkBattleContinue() {
+    if (opponentIsTrainer) {
+        opponentIndex++;
+        if (opponentIndex < opponentTeam.length) {
+            wildPokemon = opponentTeam[opponentIndex];
+            setTimeout(() => {
+                battleMessage.innerText = `${opponentTrainer.name} sent out ${wildPokemon.name}!`;
+                updateBattleUI();
+                turnActionLocked = false;
+            }, 1000);
+        } else {
+            setTimeout(() => {
+                battleMessage.innerText = `You defeated ${opponentTrainer.name}!`;
+                defeatedTrainers[opponentTrainer.id] = true;
+
+                if (opponentTrainer.badge) {
+                    myBadges++;
+                    document.getElementById('badgeDisplay').innerText = myBadges;
+                    setTimeout(() => {
+                        battleMessage.innerText = `You received the BOULDER BADGE!`;
+                        setTimeout(endBattle, 2000);
+                    }, 1500);
+                } else {
+                    endBattle();
+                }
+            }, 1000);
+        }
     } else {
         endBattle();
     }
@@ -542,10 +661,6 @@ socket.on('playerDisconnected', (playerId) => {
 });
 
 // Level system networking
-gainExpBtn.addEventListener('click', () => {
-    socket.emit('gainExp');
-});
-
 socket.on('playerStatsUpdate', (statsInfo) => {
     if (players[statsInfo.id]) {
         players[statsInfo.id].level = statsInfo.level;
@@ -558,6 +673,7 @@ socket.on('playerStatsUpdate', (statsInfo) => {
 
 function loadMap(mapName) {
     if (mapName === 'city') buildCityMap();
+    else if (mapName === 'gym') buildGymMap();
     else if (mapName === 'dungeon') buildDungeonMap();
 }
 
@@ -601,6 +717,21 @@ function animate() {
                 // Moving in tall grass, trigger random battle chance
                 if (Math.random() < 0.02) {
                     startBattle();
+                }
+            }
+
+            // Trainer Collision Check
+            for (const obj of mapObjects) {
+                if (obj.type === 'trainer' && !defeatedTrainers[obj.id]) {
+                    // Center of trainer tile vs center of player tile
+                    const tx = obj.x + TILE_SIZE / 2;
+                    const ty = obj.y + TILE_SIZE / 2;
+                    const dx = me.x - tx;
+                    const dy = me.y - ty;
+                    if (dx*dx + dy*dy < 400) { // ~20 pixel radius interaction
+                        startBattle(obj);
+                        break;
+                    }
                 }
             }
 
