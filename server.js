@@ -29,7 +29,9 @@ io.on('connection', (socket) => {
       x: 100,
       y: 100,
       color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
-      id: socket.id
+      id: socket.id,
+      level: 1,
+      exp: 0
     };
 
     socket.emit('roomCreated', roomId);
@@ -47,7 +49,9 @@ io.on('connection', (socket) => {
         x: Math.floor(Math.random() * 500) + 50,
         y: Math.floor(Math.random() * 500) + 50,
         color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
-        id: socket.id
+        id: socket.id,
+        level: 1,
+        exp: 0
       };
 
       socket.emit('roomJoined', roomId);
@@ -67,6 +71,28 @@ io.on('connection', (socket) => {
       rooms[socket.roomId].players[socket.id].y = movementData.y;
       // Broadcast new position to everyone else in the room
       socket.to(socket.roomId).emit('playerMoved', rooms[socket.roomId].players[socket.id]);
+    }
+  });
+
+  // Leveling up / EXP gain
+  socket.on('gainExp', () => {
+    if (socket.roomId && rooms[socket.roomId] && rooms[socket.roomId].players[socket.id]) {
+      const p = rooms[socket.roomId].players[socket.id];
+      p.exp += Math.floor(Math.random() * 20) + 10; // Gain 10-30 EXP
+
+      const expNeeded = p.level * 100;
+      if (p.exp >= expNeeded) {
+        p.level += 1;
+        p.exp = p.exp - expNeeded; // carry over
+        console.log(`Player ${socket.id} leveled up to ${p.level}!`);
+      }
+
+      // Send update back to all players in the room
+      io.in(socket.roomId).emit('playerStatsUpdate', {
+        id: socket.id,
+        level: p.level,
+        exp: p.exp
+      });
     }
   });
 
