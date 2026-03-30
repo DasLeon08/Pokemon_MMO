@@ -18,60 +18,31 @@ const ctx = canvas.getContext('2d');
 // Disable smoothing for crisp pixel art look
 ctx.imageSmoothingEnabled = false;
 
-// --- Tileset Asset Management ---
-const TILE_SIZE = 32;
-let tilesetLoaded = false;
-const tileset = new Image();
-tileset.src = 'tileset.png';
-tileset.onload = () => { tilesetLoaded = true; };
+// --- Assets Management ---
+const TILE_SIZE = 48; // Upscale from typical 16px to 48px for better visibility
+let mapLoaded = false;
+const mapImage = new Image();
+mapImage.src = 'map.png';
+mapImage.onload = () => { mapLoaded = true; };
 
-// Dictionary mapping logical tiles to (x, y) coordinates on the tileset (each cell is 32x32)
-// For ProjectUtumno: grass=25,18, tree=3,23, water=43,30, wall=15,2, floor=5,0, path=6,16
-const tCoords = {
-    grass: {x: 25, y: 18, w: 1, h: 1},
-    tallGrass: {x: 24, y: 17, w: 1, h: 1}, // Added tall grass for encounters
-    tree: {x: 3, y: 23, w: 1, h: 2}, // Tall tree
-    path: {x: 6, y: 16, w: 1, h: 1},
-    water1: {x: 43, y: 30, w: 1, h: 1},
-    water2: {x: 44, y: 30, w: 1, h: 1},
-    water3: {x: 45, y: 30, w: 1, h: 1},
-    bridge: {x: 18, y: 22, w: 1, h: 1}, // Wood bridge
-    house: {x: 13, y: 28, w: 3, h: 3}, // Large house
-    floor: {x: 5, y: 0, w: 1, h: 1},
-    wall: {x: 15, y: 2, w: 1, h: 1},
-    // Simple characters (row 13)
-    player_down_1: {x: 0, y: 13, w: 1, h: 1},
-    player_down_2: {x: 1, y: 13, w: 1, h: 1},
-    player_left_1: {x: 2, y: 13, w: 1, h: 1},
-    player_left_2: {x: 3, y: 13, w: 1, h: 1},
-    player_right_1: {x: 4, y: 13, w: 1, h: 1},
-    player_right_2: {x: 5, y: 13, w: 1, h: 1},
-    player_up_1: {x: 6, y: 13, w: 1, h: 1},
-    player_up_2: {x: 7, y: 13, w: 1, h: 1},
-    // Other players can use different rows for variety
-    other_down_1: {x: 8, y: 13, w: 1, h: 1},
-    other_down_2: {x: 9, y: 13, w: 1, h: 1},
-    other_left_1: {x: 10, y: 13, w: 1, h: 1},
-    other_left_2: {x: 11, y: 13, w: 1, h: 1},
-    other_right_1: {x: 12, y: 13, w: 1, h: 1},
-    other_right_2: {x: 13, y: 13, w: 1, h: 1},
-    other_up_1: {x: 14, y: 13, w: 1, h: 1},
-    other_up_2: {x: 15, y: 13, w: 1, h: 1},
+const playerImages = {
+    down: new Image(),
+    up: new Image(),
+    left: new Image(),
+    right: new Image()
 };
+playerImages.down.src = 'playerDown.png';
+playerImages.up.src = 'playerUp.png';
+playerImages.left.src = 'playerLeft.png';
+playerImages.right.src = 'playerRight.png';
 
-function drawTile(name, destX, destY) {
-    if (!tilesetLoaded) return;
-    const t = tCoords[name];
-    if (!t) return;
-
-    // Tileset blocks are 32x32
-    const sourceX = t.x * 32;
-    const sourceY = t.y * 32;
-    const sourceW = t.w * 32;
-    const sourceH = t.h * 32;
-
-    // We scale our TILE_SIZE slightly up or down if needed, but keeping 1:1 is best for crispness
-    ctx.drawImage(tileset, sourceX, sourceY, sourceW, sourceH, destX, destY, sourceW, sourceH);
+let playersLoaded = false;
+let loadedCount = 0;
+for (const key in playerImages) {
+    playerImages[key].onload = () => {
+        loadedCount++;
+        if (loadedCount === 4) playersLoaded = true;
+    };
 }
 
 
@@ -576,95 +547,90 @@ function createPortal(x, y, targetMap, label) {
     portals.push({ x, y, radius: 20, targetMap, label });
 }
 
+// --- Map offset for centering ---
+const offset = {
+    x: -735,
+    y: -650
+}
+
+// Convert collision array to a 2D grid
+const collisionsMap = [];
+for (let i = 0; i < collisions.length; i += 70) {
+    collisionsMap.push(collisions.slice(i, i + 70));
+}
+
+const battleZonesMap = [];
+for (let i = 0; i < battleZonesData.length; i += 70) {
+    battleZonesMap.push(battleZonesData.slice(i, i + 70));
+}
+
+const boundaries = [];
+const battleZones = [];
+
+collisionsMap.forEach((row, i) => {
+    row.forEach((symbol, j) => {
+        if (symbol === 1025) {
+            boundaries.push({
+                x: j * 48 + offset.x,
+                y: i * 48 + offset.y,
+                width: 48,
+                height: 48
+            });
+        }
+    });
+});
+
+battleZonesMap.forEach((row, i) => {
+    row.forEach((symbol, j) => {
+        if (symbol === 1025) {
+            battleZones.push({
+                x: j * 48 + offset.x,
+                y: i * 48 + offset.y,
+                width: 48,
+                height: 48
+            });
+        }
+    });
+});
+
 function drawMap() {
-    const time = Date.now();
-    const waterFrame = Math.floor(time / 400) % 3;
+    if (!mapLoaded) return;
 
-    // Calculate visible grid based on camera
-    const startCol = Math.max(0, Math.floor(camX / TILE_SIZE) - 1);
-    const endCol = Math.min(MAP_COLS, startCol + Math.ceil(800 / TILE_SIZE) + 2);
-    const startRow = Math.max(0, Math.floor(camY / TILE_SIZE) - 1);
-    const endRow = Math.min(MAP_ROWS, startRow + Math.ceil(600 / TILE_SIZE) + 2);
+    // Draw the entire map background image with upscale
+    // mapImage is 1024x576. We'll upscale it 2x (or roughly proportional to TILE_SIZE change).
+    // The scale factor from original 12x12/16x16 to our 48 is roughly 3x or 4x.
+    ctx.drawImage(mapImage, offset.x, offset.y);
 
-    // Draw Base Grid (Culling applied)
-    for(let r=startRow; r<endRow; r++) {
-        for(let c=startCol; c<endCol; c++) {
-            if (!mapGrid[r] || mapGrid[r][c] === undefined) continue;
-            const tile = mapGrid[r][c];
-            const px = c * TILE_SIZE;
-            const py = r * TILE_SIZE;
-
-            if (tile === 0) drawTile('grass', px, py);
-            else if (tile === 1) drawTile('path', px, py);
-            else if (tile === 2) drawTile('floor', px, py);
-            else if (tile === 3) drawTile('wall', px, py);
-            else if (tile === 4) drawTile(`water${waterFrame + 1}`, px, py);
-            else if (tile === 5) drawTile('bridge', px, py);
-            else if (tile === 6) drawTile('tallGrass', px, py);
-        }
-    }
-
-    // Draw Map Objects (Trees, Houses)
-    mapObjects.sort((a,b) => a.y - b.y);
+    // Draw Map Objects (Trainers, etc.)
     for (const obj of mapObjects) {
-        // Simple culling for objects
-        if (obj.x < camX - 100 || obj.x > camX + 900 || obj.y < camY - 100 || obj.y > camY + 700) continue;
-
-        if (obj.type === 'tree') {
-            drawTile('tree', obj.x, obj.y - TILE_SIZE);
-        } else if (obj.type === 'house') {
-            drawTile('house', obj.x, obj.y - TILE_SIZE * 2);
-            if (obj.isShop) {
-                ctx.fillStyle = 'blue';
-                ctx.font = 'bold 10px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('MART', obj.x + TILE_SIZE * 1.5, obj.y - TILE_SIZE);
-            }
-        } else if (obj.type === 'trainer') {
+        if (obj.type === 'trainer') {
             if (!defeatedTrainers[obj.id]) {
-                drawPlayerSprite(ctx, obj.x + TILE_SIZE/2, obj.y + TILE_SIZE/2, 'red', 'down', 0);
+                drawPlayerSprite(ctx, obj.x, obj.y, 'red', 'down', 0);
             }
         }
-    }
-
-    // Draw Portals (Classic warp pad style)
-    for (const portal of portals) {
-        if (portal.x < camX - 50 || portal.x > camX + 850 || portal.y < camY - 50 || portal.y > camY + 650) continue;
-
-        ctx.fillStyle = '#8A2BE2'; // Purple
-        ctx.beginPath();
-        ctx.ellipse(portal.x, portal.y, 24, 12, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#DDA0DD'; // Light Purple inner
-        ctx.beginPath();
-        ctx.ellipse(portal.x, portal.y, 16, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 12px "Press Start 2P", monospace, Arial';
-        ctx.textAlign = 'center';
-        // Black text shadow
-        ctx.fillStyle = 'black';
-        ctx.fillText(portal.label, portal.x + 1, portal.y - 24 + 1);
-        ctx.fillStyle = 'white';
-        ctx.fillText(portal.label, portal.x, portal.y - 24);
     }
 }
 
 // Draw Player from Sprite Sheet
 function drawPlayerSprite(ctx, x, y, color, facing = 'down', walkFrame = 0, isLocalPlayer = false) {
-    const frameBase = Math.floor(walkFrame) % 2;
-    // Map internal directions to sprite names
-    // Choose prefix based on local player or network player for variation
-    const prefix = isLocalPlayer ? 'player' : 'other';
-    const spriteName = `${prefix}_${facing}_${frameBase + 1}`;
+    // Player sprites are 4 frames per animation, 48x68 usually, but these specific ones:
+    // width: 192 (4 frames of 48)
+    // height: 68
 
-    // Draw the actual image
-    drawTile(spriteName, x - TILE_SIZE/2, y - TILE_SIZE + 10);
+    const frameIndex = Math.floor(walkFrame) % 4;
+    const spriteWidth = playerImages.down.width / 4; // usually 48
+    const spriteHeight = playerImages.down.height;   // usually 68
 
-    // Fallback colored indicator circle if image isn't loaded yet
-    if (!tilesetLoaded) {
-        ctx.fillStyle = color;
+    const img = playerImages[facing] || playerImages.down;
+
+    if (playersLoaded) {
+        ctx.drawImage(
+            img,
+            frameIndex * spriteWidth, 0, spriteWidth, spriteHeight,
+            x - spriteWidth/2, y - spriteHeight/2 - 10, spriteWidth, spriteHeight
+        );
+    } else {
+        ctx.fillStyle = color || 'red';
         ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI*2); ctx.fill();
     }
 }
@@ -708,12 +674,37 @@ const btnPotionCount = document.getElementById('btn-potion-count');
 const btnSuperPotionCount = document.getElementById('btn-superpotion-count');
 const btnPokeballCount = document.getElementById('btn-pokeball-count');
 
+// Function to set the battle background dynamically
+function setBattleBackground(playerX, playerY) {
+    const container = document.getElementById('battle-container');
+    container.classList.remove('bg-grass', 'bg-water', 'bg-cave', 'bg-sand');
+
+    // Use the current map name if available
+    let bgClass = 'bg-grass'; // Default
+    if (typeof currentMap !== 'undefined') {
+        if (currentMap.includes('water')) {
+            bgClass = 'bg-water';
+        } else if (currentMap.includes('rock') || currentMap.includes('dungeon') || currentMap.includes('gym')) {
+            bgClass = 'bg-cave';
+        } else if (currentMap.includes('route2')) {
+            bgClass = 'bg-sand';
+        }
+    }
+
+    container.classList.add(bgClass);
+}
+
 function startBattle(trainer = null) {
     inBattle = true;
     turnActionLocked = false;
     opponentIsTrainer = trainer !== null;
     opponentTrainer = trainer;
     opponentIndex = 0;
+
+    const me = players[socket.id];
+    if (me) {
+        setBattleBackground(me.x, me.y);
+    }
 
     if (opponentIsTrainer) {
         // Load trainer's team
@@ -1158,16 +1149,51 @@ function animate() {
     const oldY = me.y;
 
     if (!inBattle) {
-        if (keys.w || keys.ArrowUp) { me.y -= SPEED * 10; me.facing = 'up'; }
-        if (keys.s || keys.ArrowDown) { me.y += SPEED * 10; me.facing = 'down'; }
-        if (keys.a || keys.ArrowLeft) { me.x -= SPEED * 10; me.facing = 'left'; }
-        if (keys.d || keys.ArrowRight) { me.x += SPEED * 10; me.facing = 'right'; }
+        let moving = false;
+        let futureX = me.x;
+        let futureY = me.y;
 
-        // Boundary roughly matching our 3D plane scale
-        if (me.x < 0) me.x = 0;
-        if (me.x > MAP_COLS * TILE_SIZE) me.x = MAP_COLS * TILE_SIZE;
-        if (me.y < 0) me.y = 0;
-        if (me.y > MAP_ROWS * TILE_SIZE) me.y = MAP_ROWS * TILE_SIZE;
+        if (keys.w || keys.ArrowUp) { futureY -= SPEED * 10; me.facing = 'up'; moving = true; }
+        else if (keys.s || keys.ArrowDown) { futureY += SPEED * 10; me.facing = 'down'; moving = true; }
+        else if (keys.a || keys.ArrowLeft) { futureX -= SPEED * 10; me.facing = 'left'; moving = true; }
+        else if (keys.d || keys.ArrowRight) { futureX += SPEED * 10; me.facing = 'right'; moving = true; }
+
+        // Determine if there is a collision
+        let collision = false;
+
+        // Player hitbox bounding box relative to their x,y
+        // Adjust these to make moving through narrow gaps easier
+        const pHW = 16; // half width
+        const pHH = 16; // half height
+        const pRect = { x: futureX - pHW, y: futureY - pHH, w: pHW * 2, h: pHH * 2 };
+
+        // Define a slightly smaller hitbox for strict collision checks (e.g. feet area)
+        const pCollRect = { x: futureX - pHW + 6, y: futureY, w: pHW * 2 - 12, h: pHH };
+
+        if (moving) {
+            for (let i = 0; i < boundaries.length; i++) {
+                const b = boundaries[i];
+                // Check against the smaller feet collision box
+                if (
+                    pCollRect.x < b.x + b.width &&
+                    pCollRect.x + pCollRect.w > b.x &&
+                    pCollRect.y < b.y + b.height &&
+                    pCollRect.y + pCollRect.h > b.y
+                ) {
+                    collision = true;
+                    break;
+                }
+            }
+        }
+
+        if (!collision) {
+            me.x = futureX;
+            me.y = futureY;
+        }
+
+        // Boundary roughly matching our map size (optional fallback)
+        // if (me.x < 0) me.x = 0;
+        // if (me.y < 0) me.y = 0;
 
         if (me.x !== oldX || me.y !== oldY) {
             me.walkFrame = (me.walkFrame || 0) + 0.2;
@@ -1196,13 +1222,20 @@ function animate() {
                 document.getElementById('shop-container').style.display = 'none';
             }
 
-            // Encounter check in tall grass
-            const gridX = Math.floor(me.x / TILE_SIZE);
-            const gridY = Math.floor(me.y / TILE_SIZE);
-            if (mapGrid[gridY] && mapGrid[gridY][gridX] === 6) {
-                // Moving in tall grass, trigger random battle chance
-                if (Math.random() < 0.02) {
-                    startBattle();
+            // Encounter check using battleZones array
+            for (let i = 0; i < battleZones.length; i++) {
+                const bz = battleZones[i];
+                if (
+                    pRect.x < bz.x + bz.width &&
+                    pRect.x + pRect.w > bz.x &&
+                    pRect.y < bz.y + bz.height &&
+                    pRect.y + pRect.h > bz.y
+                ) {
+                    // Moving in tall grass, trigger random battle chance
+                    if (Math.random() < 0.02) {
+                        startBattle();
+                    }
+                    break;
                 }
             }
 
@@ -1250,8 +1283,10 @@ function animate() {
     }
 
     // Calculate Camera Position
-    camX = Math.max(0, Math.min(me.x - 400, MAP_COLS * TILE_SIZE - 800));
-    camY = Math.max(0, Math.min(me.y - 300, MAP_ROWS * TILE_SIZE - 600));
+    // We want the camera to center on the player, but we won't bound it to map width/height just yet
+    // since we use a single big background image for now.
+    camX = me.x - 400;
+    camY = me.y - 300;
 
     // Clear Canvas and Draw Map
     ctx.clearRect(0, 0, 800, 600);
@@ -1260,6 +1295,18 @@ function animate() {
     ctx.translate(-camX, -camY);
 
     drawMap();
+
+    // Debug collision rendering (optional)
+    /*
+    ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+    boundaries.forEach(b => {
+        ctx.fillRect(b.x, b.y, b.width, b.height);
+    });
+    ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
+    battleZones.forEach(bz => {
+        ctx.fillRect(bz.x, bz.y, bz.width, bz.height);
+    });
+    */
 
     // Draw Players (Sort by Y for depth)
     const playersInMap = Object.values(players).filter(p => p.map === currentMap);

@@ -89,122 +89,155 @@ canvas {
     left: 0;
     width: 800px;
     height: 600px;
-    background-color: #f0f0f0;
+    background-color: #f8f8f8;
+    background-image: url('battle_bg_grass.png'); /* Default background */
+    background-size: cover;
+    background-position: center;
     z-index: 100;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    font-family: 'Press Start 2P', monospace, sans-serif;
+    font-family: 'Courier New', Courier, monospace;
 }
+
+#battle-container.bg-grass { background-image: url('battle_bg_grass.png'); }
+#battle-container.bg-water { background-image: url('battle_bg_water.png'); }
+#battle-container.bg-cave { background-image: url('battle_bg_cave.png'); }
+#battle-container.bg-sand { background-image: url('battle_bg_sand.png'); }
 
 #battle-scene {
     position: relative;
     flex: 1;
-    background-color: #e0f8d0; /* light grass green */
-    border-bottom: 4px solid #333;
+    background: transparent;
+    border-bottom: 4px solid #686050;
 }
 
 #wild-sprite {
     position: absolute;
     top: 50px;
     right: 150px;
-    width: 150px;
-    height: 150px;
+    width: 200px;
+    height: 200px;
     image-rendering: pixelated;
+    /* Adjusting filter so shadow isn't needed anymore with the base */
 }
 
 #player-sprite {
     position: absolute;
-    bottom: 50px;
+    bottom: 80px;
     left: 100px;
-    width: 150px;
-    height: 150px;
+    width: 220px;
+    height: 220px;
     image-rendering: pixelated;
 }
 
 .health-box {
     position: absolute;
-    background: #ffffe0;
-    border: 4px solid #333;
-    border-radius: 8px;
-    padding: 10px;
-    width: 250px;
-    box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+    background: #f8e8c8;
+    border: 4px solid #686050;
+    border-radius: 12px;
+    padding: 15px;
+    width: 280px;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.5), inset 0px 0px 0px 2px #fff;
+    color: #404040;
 }
 
 #wild-health {
-    top: 50px;
-    left: 50px;
+    top: 30px;
+    left: 40px;
+    border-bottom-right-radius: 24px;
 }
 
 #player-health {
-    bottom: 50px;
-    right: 50px;
+    bottom: 30px;
+    right: 40px;
+    border-top-left-radius: 24px;
 }
 
 .health-box > div:first-child {
-    font-size: 14px;
-    margin-bottom: 8px;
+    font-size: 20px;
+    margin-bottom: 12px;
     font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .hp-bar {
     width: 100%;
-    height: 12px;
-    background-color: #555;
-    border: 2px solid #222;
-    border-radius: 4px;
+    height: 14px;
+    background-color: #484030;
+    border: 2px solid #e8e8e8;
+    border-radius: 7px;
+    position: relative;
+    overflow: hidden;
 }
 
 .hp-fill {
     height: 100%;
     background-color: #00ff00;
     width: 100%;
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    border-radius: 4px;
 }
 
 #battle-menu {
-    height: 150px;
+    height: 180px;
     display: flex;
-    background-color: #fff;
+    background-color: #f8e8c8;
 }
 
 #battle-message {
     flex: 2;
-    border: 4px solid #333;
-    border-radius: 8px;
-    margin: 10px;
-    padding: 20px;
-    font-size: 16px;
-    line-height: 1.5;
-    box-shadow: inset 2px 2px 0 rgba(0,0,0,0.1);
+    border: 6px double #686050;
+    border-radius: 12px;
+    margin: 15px;
+    padding: 25px;
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1.6;
+    background-color: #f8f8f8;
+    box-shadow: 0px 4px 0 rgba(0,0,0,0.2), inset 0px 0px 0px 4px #e0e0e0;
+    color: #404040;
 }
 
 #battle-actions {
-    flex: 1;
+    flex: 1.2;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    margin: 10px 10px 10px 0;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-content: space-around;
+    margin: 15px 15px 15px 0;
+    padding: 10px;
+    background: white;
+    border: 4px solid #686050;
+    border-radius: 8px;
 }
 
 #battle-actions button {
-    background-color: #fff;
-    color: #333;
-    border: 4px solid #333;
-    border-radius: 8px;
-    padding: 10px;
-    margin: 4px 0;
-    font-size: 16px;
+    background-color: white;
+    color: #404040;
+    border: 3px solid #686050;
+    border-radius: 6px;
+    padding: 8px 4px;
+    margin: 1%;
+    width: 31%; /* Allow 3 per row roughly */
+    font-size: 14px;
     font-family: inherit;
+    font-weight: bold;
     cursor: pointer;
-    box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+    box-shadow: 2px 2px 0 #b8b0a0;
+    text-transform: uppercase;
 }
 
 #battle-actions button:hover {
-    background-color: #f0f0f0;
+    background-color: #e8e8e8;
     transform: translate(1px, 1px);
-    box-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+    box-shadow: 1px 1px 0 #b8b0a0;
+}
+
+#battle-actions button:active {
+    transform: translate(2px, 2px);
+    box-shadow: none;
 }
 
 #shop-container {
