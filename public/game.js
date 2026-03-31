@@ -708,34 +708,48 @@ function startBattle(trainer = null) {
         setBattleBackground(me.x, me.y);
     }
 
+    // Ensure player has a starter FIRST before calculating opponent levels
+    if (myTeam.length === 0) {
+        // Starters across gens 1-5
+        const starters = [1, 4, 7, 152, 155, 158, 252, 255, 258, 387, 390, 393, 495, 498, 501];
+        const starterId = starters[Math.floor(Math.random() * starters.length)];
+        myTeam.push(generatePokemon(starterId, 5));
+    }
+    activePokemon = myTeam[0];
+
+    // Find average level of the player's team for dynamic scaling
+    const teamAvgLevel = Math.max(5, Math.floor(myTeam.reduce((sum, p) => sum + p.level, 0) / myTeam.length));
+
     if (opponentIsTrainer) {
         // Load trainer's team
         // Deep copy so we don't modify the map object template
         opponentTeam = JSON.parse(JSON.stringify(trainer.team));
+
+        // Dynamically scale the trainer's team to be fair (around player's average level)
+        opponentTeam.forEach((p, idx) => {
+            // Bosses/Gym leaders might be slightly higher level
+            const levelBonus = trainer.badge ? 2 : 0;
+            const newLevel = Math.max(1, teamAvgLevel + levelBonus + (Math.random() > 0.5 ? 1 : -1));
+            // Regenerate the pokemon with the scaled level
+            opponentTeam[idx] = generatePokemon(p.speciesId, newLevel, p.isShiny);
+        });
+
         wildPokemon = opponentTeam[0]; // 'wildPokemon' is actually the opponent pokemon
         document.getElementById('btn-catch').style.display = 'none'; // Can't catch trainer pokemon
     } else {
         // Only generate new if not already set by external test scripts
         if (!wildPokemon || wildPokemon.hp <= 0) {
-            // Generate Wild Pokemon (Level 2 to 5)
-        // Use an enormous variety across all 649 available Pokémon!
-        // We'll pick random fully-evolved or base stages. To keep it simple, just a random number 1 to 649!
-        const wildId = Math.floor(Math.random() * 649) + 1;
-        const wildLvl = Math.floor(Math.random() * 8) + 2; // Level 2 to 9
+            // Generate Wild Pokemon (dynamically scaled)
+            // We'll pick random fully-evolved or base stages. To keep it simple, just a random number 1 to 649!
+            const wildId = Math.floor(Math.random() * 649) + 1;
+
+            // Wild pokemon are usually slightly weaker or equal to the player
+            const wildLvl = Math.max(2, teamAvgLevel + Math.floor(Math.random() * 5) - 2); // PlayerAvgLevel +/- 2
             const isShiny = Math.random() < 0.05; // 5% chance shiny for fun
             wildPokemon = generatePokemon(wildId, wildLvl, isShiny);
         }
         document.getElementById('btn-catch').style.display = 'inline-block';
     }
-
-    // Ensure player has a starter
-    if (myTeam.length === 0) {
-    // Starters across gens 1-5
-    const starters = [1, 4, 7, 152, 155, 158, 252, 255, 258, 387, 390, 393, 495, 498, 501];
-        const starterId = starters[Math.floor(Math.random() * starters.length)];
-        myTeam.push(generatePokemon(starterId, 5));
-    }
-    activePokemon = myTeam[0];
 
     updateBattleUI();
     battleContainer.style.display = 'flex';
