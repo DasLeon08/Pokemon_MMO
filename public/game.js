@@ -607,12 +607,24 @@ function drawMap() {
             if (!defeatedTrainers[obj.id]) {
                 drawPlayerSprite(ctx, obj.x, obj.y, 'red', 'down', 0);
             }
+        } else if (obj.type === 'tree' || obj.type === 'house' || obj.type === 'sign') {
+            // Draw a fake drop shadow for static map objects that aren't rendered on the map image itself
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.beginPath();
+            ctx.ellipse(obj.x + TILE_SIZE/2, obj.y + TILE_SIZE - 5, TILE_SIZE/2, TILE_SIZE/4, 0, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 }
 
 // Draw Player from Sprite Sheet
 function drawPlayerSprite(ctx, x, y, color, facing = 'down', walkFrame = 0, isLocalPlayer = false) {
+    // Draw shadow underneath player
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 20, 16, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
     // Player sprites are 4 frames per animation, 48x68 usually, but these specific ones:
     // width: 192 (4 frames of 48)
     // height: 68
@@ -1365,13 +1377,22 @@ function animate() {
         ctx.fillStyle = 'white';
         ctx.font = 'bold 12px "Press Start 2P", monospace, Arial';
         ctx.textAlign = 'center';
-        // Black outline
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = 'black';
+
+        // Softer drop shadow instead of hard black stroke
+        ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+
         const lvl = p.level || 1;
         const text = `${p.id === myId ? 'You' : 'Player'} (Lv.${lvl})`;
-        ctx.strokeText(text, p.x, p.y - 20);
-        ctx.fillText(text, p.x, p.y - 20);
+        ctx.fillText(text, p.x, p.y - 35);
+
+        // Reset shadow to not affect other drawings
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
     }
 
     ctx.restore();

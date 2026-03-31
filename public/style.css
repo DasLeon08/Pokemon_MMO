@@ -70,17 +70,20 @@ canvas {
     top: 20px;
     left: 20px;
     z-index: 10;
-    color: white;
-    text-shadow: 1px 1px 0 #000;
+    color: #404040; /* Darker text for paper look */
+    text-shadow: 1px 1px 0 #fff; /* White glow to stand out against paper */
 }
 
 #playerStats {
-    background: rgba(0, 0, 0, 0.6);
-    padding: 10px;
-    border: 2px solid white;
-    border-radius: 5px;
+    background: #f8e8c8; /* GBA text box color */
+    padding: 15px 20px;
+    border: 4px solid #686050;
+    border-radius: 12px;
     margin-bottom: 10px;
     font-size: 12px;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5), inset 0px 0px 0px 2px #fff;
+    line-height: 1.8;
+    font-weight: bold;
 }
 
 #battle-container {
@@ -248,42 +251,70 @@ canvas {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 400px;
-    background-color: #fff;
-    border: 4px solid #333;
-    border-radius: 8px;
-    padding: 20px;
+    width: 500px;
+    background-color: #f8e8c8;
+    border: 6px solid #686050;
+    border-radius: 12px;
+    padding: 30px;
     z-index: 200;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.5), inset 0px 0px 0px 4px #fff;
     text-align: center;
+    color: #404040;
+    text-shadow: 1px 1px 0 #fff;
+    line-height: 1.5;
 }
 
 #shop-container h2 {
-    color: #4169E1;
+    color: #cc0000;
     margin-top: 0;
+    font-size: 24px;
+    text-shadow: 2px 2px 0 #ffcccc;
+}
+
+#shop-container p {
+    font-weight: bold;
+    margin-bottom: 25px;
 }
 
 .shop-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #f8f8f8;
-    border: 2px solid #ccc;
-    padding: 10px;
+    background-color: white;
+    border: 3px solid #686050;
+    border-radius: 8px;
+    padding: 12px;
     margin: 10px 0;
-    font-size: 14px;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 2px 2px 0 #b8b0a0;
 }
 
 .shop-item button, #btn-close-shop {
-    background-color: #4CAF50;
-    color: white;
-    padding: 8px 15px;
-    border: 2px solid #333;
+    background-color: white;
+    color: #404040;
+    padding: 10px 15px;
+    border: 3px solid #686050;
+    border-radius: 6px;
     cursor: pointer;
     font-family: inherit;
     font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 2px 2px 0 #b8b0a0;
+}
+
+#btn-close-shop {
+    margin-top: 20px;
 }
 
 .shop-item button:hover, #btn-close-shop:hover {
-    background-color: #45a049;
+    background-color: #e8e8e8;
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 #b8b0a0;
+}
+
+.shop-item button:active, #btn-close-shop:active {
+    transform: translate(2px, 2px);
+    box-shadow: none;
 }
