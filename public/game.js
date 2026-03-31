@@ -124,7 +124,7 @@ function buildTown1() {
     mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.y === -TILE_SIZE && (o.x === 11*TILE_SIZE || o.x === 12*TILE_SIZE)));
 
     // Portal North to Route 1
-    createPortal(12 * TILE_SIZE + 16, 10, 'route1', 'To Route 1');
+    createPortal(12 * TILE_SIZE + 16, 10, 'route1', 'To Route 1', 9 * TILE_SIZE + 24, 44 * TILE_SIZE - 20);
 }
 
 function buildRoute1() {
@@ -175,8 +175,8 @@ function buildRoute1() {
     // Open path North to Town 2
     mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.y === -TILE_SIZE && (o.x === 9*TILE_SIZE || o.x === 10*TILE_SIZE)));
 
-    createPortal(10 * TILE_SIZE + 16, MAP_ROWS * TILE_SIZE - 20, 'town1', 'To Pallet Town');
-    createPortal(10 * TILE_SIZE + 16, 10, 'town2', 'To Viridian City');
+    createPortal(10 * TILE_SIZE + 16, MAP_ROWS * TILE_SIZE - 20, 'town1', 'To Pallet Town', 12 * TILE_SIZE, 50);
+    createPortal(10 * TILE_SIZE + 16, 10, 'town2', 'To Viridian City', 15 * TILE_SIZE, 49 * TILE_SIZE - 20);
 }
 
 function buildTown2() {
@@ -248,56 +248,73 @@ function buildTown2() {
     for(let r=25; r<27; r++) { mapGrid[r][MAP_COLS-1] = 1; }
     mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === (MAP_COLS-1)*TILE_SIZE && o.y >= 25*TILE_SIZE && o.y <= 27*TILE_SIZE));
 
-    createPortal(16 * TILE_SIZE + 16, MAP_ROWS * TILE_SIZE - 20, 'route1', 'To Route 1');
-    createPortal(MAP_COLS * TILE_SIZE - 20, 26 * TILE_SIZE + 16, 'route2', 'To Route 2');
+    createPortal(16 * TILE_SIZE + 16, MAP_ROWS * TILE_SIZE - 20, 'route1', 'To Route 1', 10 * TILE_SIZE, 50);
+    createPortal(MAP_COLS * TILE_SIZE - 20, 26 * TILE_SIZE + 16, 'route2', 'To Route 2', 50, 30 * TILE_SIZE);
 
     // Dungeons and Gym entrances scattered around the city edges
-    createPortal(50, 20 * TILE_SIZE + 16, 'water_dungeon', 'Seafoam Cave');
-    createPortal(20 * TILE_SIZE + 16, 50, 'rock_dungeon', 'Mt. Moon Cave');
-    createPortal(MAP_COLS * TILE_SIZE - 200, 10 * TILE_SIZE + 16, 'gym', 'Pewter Gym');
+    createPortal(50, 20 * TILE_SIZE + 16, 'water_dungeon', 'Seafoam Cave', 800, 800);
+    createPortal(20 * TILE_SIZE + 16, 50, 'rock_dungeon', 'Mt. Moon Cave', 750, 750);
+    createPortal(MAP_COLS * TILE_SIZE - 200, 10 * TILE_SIZE + 16, 'gym', 'Pewter Gym', 12 * TILE_SIZE, 48 * TILE_SIZE);
 }
 
 function buildRoute2() {
     clearMap();
-    MAP_COLS = 60;
-    MAP_ROWS = 25; // Long horizontal route
+    MAP_COLS = 120; // Massive horizontal route
+    MAP_ROWS = 60;
     fillMapGrid(0);
 
     // Winding Path from left to right
-    for (let c=0; c<15; c++) { mapGrid[6][c] = 1; mapGrid[7][c] = 1; }
-    for (let r=6; r<20; r++) { mapGrid[r][14] = 1; mapGrid[r][15] = 1; }
-    for (let c=14; c<35; c++) { mapGrid[19][c] = 1; mapGrid[20][c] = 1; }
-    for (let r=12; r<20; r++) { mapGrid[r][34] = 1; mapGrid[r][35] = 1; }
-    for (let c=34; c<MAP_COLS; c++) { mapGrid[12][c] = 1; mapGrid[13][c] = 1; }
+    for (let c=0; c<15; c++) { mapGrid[30][c] = 1; mapGrid[31][c] = 1; }
+    for (let r=30; r<40; r++) { mapGrid[r][14] = 1; mapGrid[r][15] = 1; }
+    for (let c=14; c<35; c++) { mapGrid[39][c] = 1; mapGrid[40][c] = 1; }
+    for (let r=20; r<40; r++) { mapGrid[r][34] = 1; mapGrid[r][35] = 1; }
+    for (let c=34; c<60; c++) { mapGrid[20][c] = 1; mapGrid[21][c] = 1; }
+    for (let r=20; r<50; r++) { mapGrid[r][59] = 1; mapGrid[r][60] = 1; }
+    for (let c=59; c<90; c++) { mapGrid[49][c] = 1; mapGrid[50][c] = 1; }
+    for (let r=25; r<50; r++) { mapGrid[r][89] = 1; mapGrid[r][90] = 1; }
+    for (let c=89; c<MAP_COLS; c++) { mapGrid[25][c] = 1; mapGrid[26][c] = 1; }
 
     // Enormous patches of tall grass
-    for(let r=2; r<5; r++) { for(let c=5; c<14; c++) { mapGrid[r][c] = 6; } }
-    for(let r=14; r<19; r++) { for(let c=20; c<30; c++) { mapGrid[r][c] = 6; } }
-    for(let r=15; r<22; r++) { for(let c=40; c<55; c++) { mapGrid[r][c] = 6; } }
+    for(let r=20; r<28; r++) { for(let c=5; c<14; c++) { mapGrid[r][c] = 6; } }
+    for(let r=34; r<39; r++) { for(let c=20; c<30; c++) { mapGrid[r][c] = 6; } }
+    for(let r=25; r<35; r++) { for(let c=40; c<55; c++) { mapGrid[r][c] = 6; } }
+    for(let r=30; r<45; r++) { for(let c=65; c<80; c++) { mapGrid[r][c] = 6; } }
+    for(let r=10; r<20; r++) { for(let c=80; c<100; c++) { mapGrid[r][c] = 6; } }
+    for(let r=30; r<40; r++) { for(let c=100; c<115; c++) { mapGrid[r][c] = 6; } }
 
     // Trainers
     mapObjects.push({
         type: 'trainer', id: 'route2_lass', name: 'Lass Mia',
-        x: 20 * TILE_SIZE, y: 15 * TILE_SIZE,
+        x: 20 * TILE_SIZE, y: 35 * TILE_SIZE,
         team: [generatePokemon(43, 6), generatePokemon(43, 7)] // Oddish
     });
     mapObjects.push({
         type: 'trainer', id: 'route2_hiker', name: 'Hiker Bob',
-        x: 40 * TILE_SIZE, y: 10 * TILE_SIZE,
+        x: 40 * TILE_SIZE, y: 15 * TILE_SIZE,
         team: [generatePokemon(74, 8), generatePokemon(66, 8)] // Geodude, Machop
     });
+    mapObjects.push({
+        type: 'trainer', id: 'route2_camper', name: 'Camper Dan',
+        x: 75 * TILE_SIZE, y: 45 * TILE_SIZE,
+        team: [generatePokemon(32, 10)] // Nidoran M
+    });
+    mapObjects.push({
+        type: 'trainer', id: 'route2_bugcatcher2', name: 'Bug Catcher Rick',
+        x: 105 * TILE_SIZE, y: 25 * TILE_SIZE,
+        team: [generatePokemon(13, 9), generatePokemon(14, 10)] // Weedle, Kakuna
+    });
 
-    mapObjects.push({ type: 'sign', x: 25 * TILE_SIZE, y: 22 * TILE_SIZE, text: "Route 2 - The long road East to Cerulean City." });
+    mapObjects.push({ type: 'sign', x: 25 * TILE_SIZE, y: 42 * TILE_SIZE, text: "Route 2 - The long road East to Cerulean City." });
 
     buildBorderTrees();
 
     // Open path West to Town 2
-    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === -TILE_SIZE/2 && o.y >= 5*TILE_SIZE && o.y <= 7*TILE_SIZE));
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === -TILE_SIZE/2 && o.y >= 29*TILE_SIZE && o.y <= 32*TILE_SIZE));
     // Open path East to Town 3
-    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === (MAP_COLS-1)*TILE_SIZE && o.y >= 12*TILE_SIZE && o.y <= 14*TILE_SIZE));
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === (MAP_COLS-1)*TILE_SIZE && o.y >= 24*TILE_SIZE && o.y <= 27*TILE_SIZE));
 
-    createPortal(20, 6 * TILE_SIZE + 16, 'town2', 'To Viridian City');
-    createPortal(MAP_COLS * TILE_SIZE - 20, 13 * TILE_SIZE, 'town3', 'To Cerulean City');
+    createPortal(20, 30 * TILE_SIZE + 16, 'town2', 'To Viridian City', 48 * TILE_SIZE, 26 * TILE_SIZE);
+    createPortal(MAP_COLS * TILE_SIZE - 20, 25 * TILE_SIZE, 'town3', 'To Cerulean City', 50, 13 * TILE_SIZE);
 }
 
 function buildTown3() {
@@ -347,7 +364,7 @@ function buildTown3() {
 
     // Gym Entrance (Looks like a normal house here, but goes to gym2)
     mapObjects.push({ type: 'house', x: 10 * TILE_SIZE, y: 45 * TILE_SIZE });
-    createPortal(11 * TILE_SIZE, 48 * TILE_SIZE, 'gym2', 'Cerulean Gym');
+    createPortal(11 * TILE_SIZE, 48 * TILE_SIZE, 'gym2', 'Cerulean Gym', 12 * TILE_SIZE, 22 * TILE_SIZE);
 
     buildBorderTrees();
 
@@ -355,7 +372,7 @@ function buildTown3() {
     for(let r=12; r<15; r++) mapGrid[r][0] = 1; // Connect path explicitly
     mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === -TILE_SIZE/2 && o.y >= 12*TILE_SIZE && o.y <= 14*TILE_SIZE));
 
-    createPortal(20, 13 * TILE_SIZE + 16, 'route2', 'To Route 2');
+    createPortal(20, 13 * TILE_SIZE + 16, 'route2', 'To Route 2', 118 * TILE_SIZE, 25 * TILE_SIZE);
 }
 
 function buildGymMap() {
@@ -400,7 +417,7 @@ function buildGymMap() {
         team: [generatePokemon(74, 12), generatePokemon(75, 14)] // Geodude, Graveler
     });
 
-    createPortal(400, 500, 'town2', 'Exit');
+    createPortal(400, 500, 'town2', 'Exit', 38 * TILE_SIZE, 10 * TILE_SIZE);
 }
 
 function buildGym2() {
@@ -459,7 +476,7 @@ function buildGym2() {
         team: [generatePokemon(73, 21)] // Tentacruel
     });
 
-    createPortal(400, 750, 'town3', 'Exit');
+    createPortal(400, 750, 'town3', 'Exit', 11 * TILE_SIZE, 49 * TILE_SIZE);
 }
 
 function buildRockDungeon() {
@@ -502,7 +519,7 @@ function buildRockDungeon() {
         team: [generatePokemon(74, 8), generatePokemon(41, 7)] // Geodude, Zubat
     });
 
-    createPortal(400, 800, 'town2', 'Exit to City');
+    createPortal(400, 800, 'town2', 'Exit to City', 20 * TILE_SIZE, 48 * TILE_SIZE);
 }
 
 function buildWaterDungeon() {
@@ -540,79 +557,143 @@ function buildWaterDungeon() {
         team: [generatePokemon(72, 10), generatePokemon(54, 9)] // Tentacool, Psyduck
     });
 
-    createPortal(450, 850, 'town3', 'Exit to City');
+    createPortal(450, 850, 'town2', 'Exit to City', 48, 20 * TILE_SIZE);
 }
 
-function createPortal(x, y, targetMap, label) {
-    portals.push({ x, y, radius: 20, targetMap, label });
+function createPortal(x, y, targetMap, label, targetX = null, targetY = null) {
+    portals.push({ x, y, radius: 20, targetMap, label, targetX, targetY });
 }
 
 // --- Map offset for centering ---
-const offset = {
-    x: -735,
-    y: -650
-}
+const offset = { x: 0, y: 0 };
+let boundaries = [];
+let battleZones = [];
 
-// Convert collision array to a 2D grid
-const collisionsMap = [];
-for (let i = 0; i < collisions.length; i += 70) {
-    collisionsMap.push(collisions.slice(i, i + 70));
-}
+function generateCollisionsFromGrid() {
+    boundaries = [];
+    battleZones = [];
+    for (let r = 0; r < MAP_ROWS; r++) {
+        for (let c = 0; c < MAP_COLS; c++) {
+            const tile = mapGrid[r][c];
+            const x = c * TILE_SIZE;
+            const y = r * TILE_SIZE;
 
-const battleZonesMap = [];
-for (let i = 0; i < battleZonesData.length; i += 70) {
-    battleZonesMap.push(battleZonesData.slice(i, i + 70));
-}
-
-const boundaries = [];
-const battleZones = [];
-
-collisionsMap.forEach((row, i) => {
-    row.forEach((symbol, j) => {
-        if (symbol === 1025) {
-            boundaries.push({
-                x: j * 48 + offset.x,
-                y: i * 48 + offset.y,
-                width: 48,
-                height: 48
-            });
+            // Walls, Water, and Map Edges are solid
+            if (tile === 3 || tile === 4) {
+                // Not if it's a bridge over water
+                boundaries.push({ x, y, width: TILE_SIZE, height: TILE_SIZE });
+            }
+            if (tile === 6) { // Tall Grass
+                battleZones.push({ x, y, width: TILE_SIZE, height: TILE_SIZE });
+            }
         }
-    });
-});
+    }
 
-battleZonesMap.forEach((row, i) => {
-    row.forEach((symbol, j) => {
-        if (symbol === 1025) {
-            battleZones.push({
-                x: j * 48 + offset.x,
-                y: i * 48 + offset.y,
-                width: 48,
-                height: 48
-            });
+    // Static objects are also boundaries
+    for (const obj of mapObjects) {
+        if (obj.type === 'tree') {
+            boundaries.push({ x: obj.x, y: obj.y, width: TILE_SIZE, height: TILE_SIZE });
+        } else if (obj.type === 'house') {
+            boundaries.push({ x: obj.x, y: obj.y, width: TILE_SIZE * 2, height: TILE_SIZE * 2 });
+        } else if (obj.type === 'sign' || obj.type === 'trainer') {
+            boundaries.push({ x: obj.x, y: obj.y, width: TILE_SIZE, height: TILE_SIZE });
         }
-    });
-});
+    }
+}
+
+// Map Tile Colors
+const tileColors = {
+    0: '#78C850', // Grass
+    1: '#F8D030', // Path/Sand
+    2: '#A0A0A0', // Stone Floor
+    3: '#705848', // Wall/Rock
+    4: '#6890F0', // Water
+    5: '#C0A080', // Bridge
+    6: '#489030', // Tall Grass
+};
 
 function drawMap() {
-    if (!mapLoaded) return;
+    // Fill background with a base color
+    ctx.fillStyle = '#78C850';
+    ctx.fillRect(camX, camY, canvas.width, canvas.height);
 
-    // Draw the entire map background image with upscale
-    // mapImage is 1024x576. We'll upscale it 2x (or roughly proportional to TILE_SIZE change).
-    // The scale factor from original 12x12/16x16 to our 48 is roughly 3x or 4x.
-    ctx.drawImage(mapImage, offset.x, offset.y);
+    // Draw Map Grid natively to support massive maps seamlessly without a background image
+    const startC = Math.max(0, Math.floor(camX / TILE_SIZE) - 1);
+    const endC = Math.min(MAP_COLS, Math.floor((camX + canvas.width) / TILE_SIZE) + 2);
+    const startR = Math.max(0, Math.floor(camY / TILE_SIZE) - 1);
+    const endR = Math.min(MAP_ROWS, Math.floor((camY + canvas.height) / TILE_SIZE) + 2);
 
-    // Draw Map Objects (Trainers, etc.)
+    for (let r = startR; r < endR; r++) {
+        for (let c = startC; c < endC; c++) {
+            const tile = mapGrid[r][c];
+            const x = c * TILE_SIZE;
+            const y = r * TILE_SIZE;
+
+            if (tile !== 0) { // Don't redraw base grass
+                ctx.fillStyle = tileColors[tile] || tileColors[0];
+                ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+
+                if (tile === 6) {
+                    // Draw little grass specks for tall grass
+                    ctx.fillStyle = '#204010';
+                    ctx.fillRect(x + 10, y + 10, 4, 12);
+                    ctx.fillRect(x + 30, y + 20, 4, 12);
+                    ctx.fillRect(x + 20, y + 30, 4, 12);
+                } else if (tile === 4) {
+                    // Water ripples
+                    ctx.fillStyle = '#98D8D8';
+                    ctx.fillRect(x + (Math.sin(Date.now() / 500 + x) * 5) + 10, y + 20, 20, 4);
+                }
+            }
+        }
+    }
+
+    // Draw Map Objects (Trainers, Trees, Houses)
     for (const obj of mapObjects) {
+        // Culling
+        if (obj.x < camX - 100 || obj.x > camX + canvas.width + 100 || obj.y < camY - 100 || obj.y > camY + canvas.height + 100) continue;
+
+        // Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.beginPath();
+        let shadowWidth = TILE_SIZE/2;
+        if (obj.type === 'house') shadowWidth = TILE_SIZE;
+        ctx.ellipse(obj.x + (obj.type==='house'?TILE_SIZE:TILE_SIZE/2), obj.y + (obj.type==='house'?TILE_SIZE*2-10:TILE_SIZE - 5), shadowWidth, shadowWidth/2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
         if (obj.type === 'trainer') {
             if (!defeatedTrainers[obj.id]) {
                 drawPlayerSprite(ctx, obj.x, obj.y, 'red', 'down', 0);
             }
-        } else if (obj.type === 'tree' || obj.type === 'house' || obj.type === 'sign') {
-            // Draw a fake drop shadow for static map objects that aren't rendered on the map image itself
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        } else if (obj.type === 'tree') {
+            ctx.fillStyle = '#206020';
             ctx.beginPath();
-            ctx.ellipse(obj.x + TILE_SIZE/2, obj.y + TILE_SIZE - 5, TILE_SIZE/2, TILE_SIZE/4, 0, 0, Math.PI * 2);
+            ctx.arc(obj.x + TILE_SIZE/2, obj.y + TILE_SIZE/2 - 10, TILE_SIZE/2 + 5, 0, Math.PI * 2);
             ctx.fill();
+            ctx.fillStyle = '#705848';
+            ctx.fillRect(obj.x + TILE_SIZE/2 - 5, obj.y + TILE_SIZE/2, 10, TILE_SIZE/2);
+        } else if (obj.type === 'house') {
+            ctx.fillStyle = '#F8D030';
+            ctx.fillRect(obj.x, obj.y + TILE_SIZE, TILE_SIZE * 2, TILE_SIZE);
+            ctx.fillStyle = obj.isShop ? '#6890F0' : '#F08030';
+            ctx.beginPath();
+            ctx.moveTo(obj.x, obj.y + TILE_SIZE);
+            ctx.lineTo(obj.x + TILE_SIZE, obj.y);
+            ctx.lineTo(obj.x + TILE_SIZE * 2, obj.y + TILE_SIZE);
+            ctx.fill();
+            // Door
+            ctx.fillStyle = '#705848';
+            ctx.fillRect(obj.x + TILE_SIZE/2 + 10, obj.y + TILE_SIZE * 1.3, 20, 30);
+            if (obj.isShop) {
+                ctx.fillStyle = 'white';
+                ctx.font = '10px Arial';
+                ctx.fillText('MART', obj.x + TILE_SIZE, obj.y + TILE_SIZE - 10);
+            }
+        } else if (obj.type === 'sign') {
+            ctx.fillStyle = '#C0A080';
+            ctx.fillRect(obj.x + 10, obj.y + 10, 28, 20);
+            ctx.fillStyle = '#705848';
+            ctx.fillRect(obj.x + 22, obj.y + 30, 4, 15);
         }
     }
 }
@@ -753,7 +834,7 @@ function startBattle(trainer = null) {
         if (!wildPokemon || wildPokemon.hp <= 0) {
             // Generate Wild Pokemon (dynamically scaled)
             // We'll pick random fully-evolved or base stages. To keep it simple, just a random number 1 to 649!
-            const wildId = Math.floor(Math.random() * 649) + 1;
+            const wildId = Math.floor(Math.random() * 949) + 1;
 
             // Wild pokemon are usually slightly weaker or equal to the player
             const wildLvl = Math.max(2, teamAvgLevel + Math.floor(Math.random() * 5) - 2); // PlayerAvgLevel +/- 2
@@ -887,6 +968,14 @@ function processTurn(action) {
         let effMsg = multiplier > 1 ? " It's super effective!" : (multiplier < 1 ? " It's not very effective..." : "");
         battleMessage.innerText = `${activePokemon.name} used ${activePokemon.move}!${effMsg}`;
 
+        // Attack Animation Flash
+        const wildImg = document.getElementById('wild-sprite');
+        wildImg.style.transition = 'filter 0.1s';
+        wildImg.style.filter = 'brightness(0) invert(1)';
+        setTimeout(() => { wildImg.style.filter = 'none'; }, 100);
+        setTimeout(() => { wildImg.style.filter = 'brightness(0) invert(1)'; }, 200);
+        setTimeout(() => { wildImg.style.filter = 'none'; }, 300);
+
         updateBattleUI();
 
         if (wildPokemon.hp <= 0) {
@@ -917,16 +1006,26 @@ function wildAttack() {
     let effMsg = multiplier > 1 ? " It's super effective!" : (multiplier < 1 ? " It's not very effective..." : "");
     battleMessage.innerText = `${opponentIsTrainer ? "Opponent's" : "Wild"} ${wildPokemon.name} used ${wildPokemon.move}!${effMsg}`;
 
+    // Attack Animation Shake & Flash
+    const playerImg = document.getElementById('player-sprite');
+    playerImg.style.transition = 'transform 0.05s';
+    playerImg.style.transform = 'translateX(-10px)';
+    setTimeout(() => { playerImg.style.transform = 'translateX(10px)'; }, 50);
+    setTimeout(() => { playerImg.style.transform = 'translateX(-10px)'; }, 100);
+    setTimeout(() => { playerImg.style.transform = 'translateX(0)'; }, 150);
+
     updateBattleUI();
 
     if (activePokemon.hp <= 0) {
         activePokemon.hp = 0;
         battleMessage.innerText = `${activePokemon.name} fainted! You blacked out!`;
         // Send player back to start and heal
-        players[myId].x = 400;
-        players[myId].y = 400;
+        currentMap = 'town1';
+        players[myId].x = 5 * TILE_SIZE; // Player house in Town 1
+        players[myId].y = 15 * TILE_SIZE + TILE_SIZE;
         activePokemon.hp = activePokemon.maxHp;
-        socket.emit('changeMap', { map: 'city', x: 400, y: 400 });
+        loadMap(currentMap);
+        socket.emit('changeMap', { map: currentMap, x: players[myId].x, y: players[myId].y });
         endBattle();
     } else {
         turnActionLocked = false; // Player can act again
@@ -1175,6 +1274,9 @@ function loadMap(mapName) {
     else if (mapName === 'gym2') buildGym2();
     else if (mapName === 'rock_dungeon') buildRockDungeon();
     else if (mapName === 'water_dungeon') buildWaterDungeon();
+    else buildTown1(); // default
+
+    generateCollisionsFromGrid();
 }
 
 function updateMyUI() {
@@ -1319,13 +1421,10 @@ function animate() {
                     // Teleport!
                     currentMap = portal.targetMap;
 
-                    // Set to default spawn depending on map
-                    if (currentMap === 'city') {
-                        me.x = 400; // Middle
-                        me.y = 100; // Near edge
-                    } else if (currentMap === 'dungeon') {
-                        me.x = 400;
-                        me.y = 400;
+                    // Set spawn coordinate based on portal definition
+                    if (portal.targetX !== null && portal.targetY !== null) {
+                        me.x = portal.targetX;
+                        me.y = portal.targetY;
                     }
 
                     loadMap(currentMap);

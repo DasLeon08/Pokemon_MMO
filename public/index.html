@@ -62,9 +62,9 @@
                     </div>
                     <div class="hp-bar"><div class="hp-fill" id="wild-hp-fill"></div></div>
                 </div>
-                <img id="wild-sprite" src="" alt="Wild Pokemon">
+                <img id="wild-sprite" src="" alt="Wild Pokemon" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/' + wildPokemon.speciesId + '.png'">
 
-                <img id="player-sprite" src="" alt="Your Pokemon">
+                <img id="player-sprite" src="" alt="Your Pokemon" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/' + activePokemon.speciesId + '.png'">
                 <div class="health-box" id="player-health">
                     <div>
                         <span id="player-name">Your Pokemon</span>
