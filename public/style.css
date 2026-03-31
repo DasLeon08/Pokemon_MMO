@@ -160,6 +160,8 @@ canvas {
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
 }
 
 .hp-bar {
@@ -176,8 +178,9 @@ canvas {
     height: 100%;
     background-color: #00ff00;
     width: 100%;
-    transition: width 0.3s ease, background-color 0.3s ease;
+    transition: width 0.5s ease-out, background-color 0.5s ease-out;
     border-radius: 4px;
+    box-shadow: inset 0px 3px 0 rgba(255,255,255,0.4);
 }
 
 #battle-menu {

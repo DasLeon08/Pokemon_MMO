@@ -665,8 +665,10 @@ const battleContainer = document.getElementById('battle-container');
 const battleMessage = document.getElementById('battle-message');
 const wildSprite = document.getElementById('wild-sprite');
 const playerSprite = document.getElementById('player-sprite');
-const wildNameLvl = document.getElementById('wild-name-level');
-const playerNameLvl = document.getElementById('player-name-level');
+const wildName = document.getElementById('wild-name');
+const wildLvl = document.getElementById('wild-lvl');
+const playerName = document.getElementById('player-name');
+const playerLvl = document.getElementById('player-lvl');
 const wildHpFill = document.getElementById('wild-hp-fill');
 const playerHpFill = document.getElementById('player-hp-fill');
 const playerHpText = document.getElementById('player-hp-text');
@@ -713,17 +715,23 @@ function startBattle(trainer = null) {
         wildPokemon = opponentTeam[0]; // 'wildPokemon' is actually the opponent pokemon
         document.getElementById('btn-catch').style.display = 'none'; // Can't catch trainer pokemon
     } else {
-        // Generate Wild Pokemon (Level 2 to 5)
-        const speciesIds = [1, 4, 7, 16, 19]; // Random early pokemon
-        const wildId = speciesIds[Math.floor(Math.random() * speciesIds.length)];
-        const wildLvl = Math.floor(Math.random() * 4) + 2;
-        wildPokemon = generatePokemon(wildId, wildLvl);
+        // Only generate new if not already set by external test scripts
+        if (!wildPokemon || wildPokemon.hp <= 0) {
+            // Generate Wild Pokemon (Level 2 to 5)
+        // Use an enormous variety across all 649 available Pokémon!
+        // We'll pick random fully-evolved or base stages. To keep it simple, just a random number 1 to 649!
+        const wildId = Math.floor(Math.random() * 649) + 1;
+        const wildLvl = Math.floor(Math.random() * 8) + 2; // Level 2 to 9
+            const isShiny = Math.random() < 0.05; // 5% chance shiny for fun
+            wildPokemon = generatePokemon(wildId, wildLvl, isShiny);
+        }
         document.getElementById('btn-catch').style.display = 'inline-block';
     }
 
     // Ensure player has a starter
     if (myTeam.length === 0) {
-        const starters = [1, 4, 7];
+    // Starters across gens 1-5
+    const starters = [1, 4, 7, 152, 155, 158, 252, 255, 258, 387, 390, 393, 495, 498, 501];
         const starterId = starters[Math.floor(Math.random() * starters.length)];
         myTeam.push(generatePokemon(starterId, 5));
     }
@@ -740,11 +748,14 @@ function startBattle(trainer = null) {
 }
 
 function updateBattleUI() {
-    wildSprite.src = POKEDEX[wildPokemon.speciesId].front;
-    playerSprite.src = POKEDEX[activePokemon.speciesId].back;
+    wildSprite.src = wildPokemon.frontSprite;
+    playerSprite.src = activePokemon.backSprite;
 
-    wildNameLvl.innerText = `${wildPokemon.name} Lv.${wildPokemon.level}`;
-    playerNameLvl.innerText = `${activePokemon.name} Lv.${activePokemon.level}`;
+    // Add shiny sparkles effect later possibly, for now just use the text
+    wildName.innerText = wildPokemon.name;
+    wildLvl.innerText = `Lv.${wildPokemon.level}`;
+    playerName.innerText = activePokemon.name;
+    playerLvl.innerText = `Lv.${activePokemon.level}`;
 
     wildHpFill.style.width = `${Math.max(0, (wildPokemon.hp / wildPokemon.maxHp) * 100)}%`;
     playerHpFill.style.width = `${Math.max(0, (activePokemon.hp / activePokemon.maxHp) * 100)}%`;
@@ -837,9 +848,14 @@ function processTurn(action) {
 
     if (action === 'fight') {
         // Player attacks
-        const moveData = MOVES[activePokemon.move];
-        const multiplier = getMultiplier(moveData.type, POKEDEX[wildPokemon.speciesId].type);
-        const damage = Math.max(1, Math.floor((((2 * activePokemon.level / 5 + 2) * moveData.power * (activePokemon.atk / wildPokemon.def)) / 50 + 2) * multiplier));
+        const moveData = MOVES[activePokemon.move] || MOVES['Tackle'];
+        const wildDex = POKEDEX[wildPokemon.speciesId];
+        const multiplier = getMultiplier(moveData.type, wildDex.type1, wildDex.type2);
+
+        let aAtk = moveData.category === 'special' ? activePokemon.spatk : activePokemon.atk;
+        let dDef = moveData.category === 'special' ? wildPokemon.spdef : wildPokemon.def;
+
+        const damage = Math.max(1, Math.floor((((2 * activePokemon.level / 5 + 2) * moveData.power * (aAtk / dDef)) / 50 + 2) * multiplier));
 
         wildPokemon.hp -= damage;
         let effMsg = multiplier > 1 ? " It's super effective!" : (multiplier < 1 ? " It's not very effective..." : "");
@@ -862,13 +878,18 @@ function processTurn(action) {
 function wildAttack() {
     if (!inBattle || wildPokemon.hp <= 0) return;
 
-    const moveData = MOVES[wildPokemon.move];
-    const multiplier = getMultiplier(moveData.type, POKEDEX[activePokemon.speciesId].type);
-    const damage = Math.max(1, Math.floor((((2 * wildPokemon.level / 5 + 2) * moveData.power * (wildPokemon.atk / activePokemon.def)) / 50 + 2) * multiplier));
+    const moveData = MOVES[wildPokemon.move] || MOVES['Tackle'];
+    const activeDex = POKEDEX[activePokemon.speciesId];
+    const multiplier = getMultiplier(moveData.type, activeDex.type1, activeDex.type2);
+
+    let aAtk = moveData.category === 'special' ? wildPokemon.spatk : wildPokemon.atk;
+    let dDef = moveData.category === 'special' ? activePokemon.spdef : activePokemon.def;
+
+    const damage = Math.max(1, Math.floor((((2 * wildPokemon.level / 5 + 2) * moveData.power * (aAtk / dDef)) / 50 + 2) * multiplier));
 
     activePokemon.hp -= damage;
     let effMsg = multiplier > 1 ? " It's super effective!" : (multiplier < 1 ? " It's not very effective..." : "");
-    battleMessage.innerText = `Wild ${wildPokemon.name} used ${wildPokemon.move}!${effMsg}`;
+    battleMessage.innerText = `${opponentIsTrainer ? "Opponent's" : "Wild"} ${wildPokemon.name} used ${wildPokemon.move}!${effMsg}`;
 
     updateBattleUI();
 
@@ -911,11 +932,19 @@ function awardExp() {
             const dexData = POKEDEX[activePokemon.speciesId];
             if (dexData.evolvesAt && activePokemon.level >= dexData.evolvesAt) {
                 setTimeout(() => {
-                    const evoName = POKEDEX[dexData.evolvesTo].name;
-                    battleMessage.innerText = `What? ${activePokemon.name} is evolving! ... It became ${evoName}!`;
-                    activePokemon.speciesId = dexData.evolvesTo;
-                    activePokemon.name = evoName;
-                    activePokemon.move = POKEDEX[dexData.evolvesTo].move;
+                    const evoId = dexData.evolvesTo;
+                    const evoData = POKEDEX[evoId];
+                    battleMessage.innerText = `What? ${activePokemon.name} is evolving! ... It became ${evoData.name}!`;
+
+                    // Update stats proportionally to new base
+                    activePokemon.speciesId = evoId;
+                    activePokemon.name = evoData.name;
+                    activePokemon.move = evoData.move;
+
+                    const isShiny = activePokemon.isShiny;
+                    activePokemon.frontSprite = isShiny ? (evoData.frontShiny || evoData.front) : evoData.front;
+                    activePokemon.backSprite = isShiny ? (evoData.backShiny || evoData.back) : evoData.back;
+
                     updateBattleUI();
                     checkBattleContinue();
                 }, 1500);
