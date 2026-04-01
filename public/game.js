@@ -852,6 +852,20 @@ function startBattle(trainer = null) {
     } else {
         battleMessage.innerText = `A wild ${wildPokemon.name} appeared!`;
     }
+
+    // Reset animations to replay them
+    document.getElementById('wild-health').style.animation = 'none';
+    document.getElementById('player-health').style.animation = 'none';
+    document.getElementById('wild-sprite').style.animation = 'none';
+    document.getElementById('player-sprite').style.animation = 'none';
+
+    // trigger reflow
+    void battleContainer.offsetWidth;
+
+    document.getElementById('wild-health').style.animation = '';
+    document.getElementById('player-health').style.animation = '';
+    document.getElementById('wild-sprite').style.animation = '';
+    document.getElementById('player-sprite').style.animation = '';
 }
 
 function updateBattleUI() {

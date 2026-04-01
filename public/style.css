@@ -92,46 +92,151 @@ canvas {
     left: 0;
     width: 800px;
     height: 600px;
-    background-color: #f8f8f8;
-    background-image: url('battle_bg_grass.png'); /* Default background */
-    background-size: cover;
-    background-position: center;
     z-index: 100;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
     font-family: 'Courier New', Courier, monospace;
+    overflow: hidden;
 }
 
-#battle-container.bg-grass { background-image: url('battle_bg_grass.png'); }
-#battle-container.bg-water { background-image: url('battle_bg_water.png'); }
-#battle-container.bg-cave { background-image: url('battle_bg_cave.png'); }
-#battle-container.bg-sand { background-image: url('battle_bg_sand.png'); }
-
+/* Base Battle Scene with Animations */
 #battle-scene {
     position: relative;
     flex: 1;
-    background: transparent;
-    border-bottom: 4px solid #686050;
+    overflow: hidden;
+    border-bottom: 6px solid #484030;
 }
+
+/* Animated Backgrounds */
+#battle-scene::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: -2;
+    background-size: 200% 200%;
+}
+
+/* Scrolling sky/clouds for grass */
+#battle-container.bg-grass #battle-scene::before {
+    background: linear-gradient(to bottom, #78c8f8 0%, #b8e8f8 60%, #98d898 60%, #78c850 100%);
+    background-size: 100% 100%;
+}
+#battle-container.bg-grass #battle-scene::after {
+    content: '';
+    position: absolute;
+    top: 10%; left: 0; width: 200%; height: 30%;
+    background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.8) 20%, transparent 60%);
+    background-size: 300px 150px;
+    animation: moveClouds 40s linear infinite;
+    z-index: -1;
+    opacity: 0.6;
+}
+
+/* Wavy water */
+#battle-container.bg-water #battle-scene::before {
+    background: linear-gradient(to bottom, #68b0f8 0%, #88c8f8 40%, #3890f8 40%, #1868d8 100%);
+    background-size: 100% 200%;
+    animation: waterBob 8s ease-in-out infinite alternate;
+}
+
+/* Dark scrolling cave */
+#battle-container.bg-cave #battle-scene::before {
+    background: linear-gradient(to bottom, #484050 0%, #302830 50%, #585040 50%, #403830 100%);
+    background-size: 100% 100%;
+}
+#battle-container.bg-cave #battle-scene::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 0, rgba(0,0,0,0.1) 10px, transparent 10px, transparent 20px);
+    animation: moveClouds 20s linear infinite;
+    z-index: -1;
+}
+
+/* Sandstorm */
+#battle-container.bg-sand #battle-scene::before {
+    background: linear-gradient(to bottom, #d8b878 0%, #f0d8a8 45%, #c8a060 45%, #b08850 100%);
+    background-size: 100% 100%;
+}
+#battle-container.bg-sand #battle-scene::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 200%; bottom: 0;
+    background: repeating-linear-gradient(90deg, rgba(248, 208, 48, 0.2) 0%, transparent 5%, rgba(200, 160, 96, 0.2) 10%);
+    animation: sandstorm 2s linear infinite;
+    z-index: 1; /* Overlay on top of pokemon */
+    pointer-events: none;
+}
+
+@keyframes moveClouds {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@keyframes waterBob {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 0% 100%; }
+}
+
+@keyframes sandstorm {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-10%); }
+}
+
+/* Ground Ellipses for Pokémon to stand on */
+.battle-ground {
+    position: absolute;
+    border-radius: 50%;
+    z-index: -1;
+}
+
+#wild-ground {
+    top: 190px;
+    right: 80px;
+    width: 320px;
+    height: 100px;
+    background-color: rgba(0, 0, 0, 0.15);
+    border: 4px solid rgba(0, 0, 0, 0.05);
+}
+
+#player-ground {
+    bottom: 20px;
+    left: -40px;
+    width: 450px;
+    height: 140px;
+    background-color: rgba(0, 0, 0, 0.15);
+    border: 4px solid rgba(0, 0, 0, 0.05);
+}
+
+#battle-container.bg-grass .battle-ground { background-color: #a0d878; border-color: #88c860; }
+#battle-container.bg-water .battle-ground { background-color: #58a8f8; border-color: #4890d8; }
+#battle-container.bg-cave .battle-ground { background-color: #686050; border-color: #504840; }
+#battle-container.bg-sand .battle-ground { background-color: #d8b878; border-color: #c8a060; }
+
 
 #wild-sprite {
     position: absolute;
-    top: 50px;
-    right: 150px;
+    top: 30px;
+    right: 140px;
     width: 200px;
     height: 200px;
     image-rendering: pixelated;
-    /* Adjusting filter so shadow isn't needed anymore with the base */
+    z-index: 2;
+    transform-origin: bottom center;
+    animation: slideInDown 0.6s ease-out forwards;
 }
 
 #player-sprite {
     position: absolute;
-    bottom: 80px;
-    left: 100px;
+    bottom: 40px;
+    left: 80px;
     width: 220px;
     height: 220px;
     image-rendering: pixelated;
+    z-index: 2;
+    transform-origin: bottom center;
+    animation: slideInUp 0.6s ease-out forwards;
 }
 
 .health-box {
@@ -143,18 +248,41 @@ canvas {
     width: 280px;
     box-shadow: 4px 4px 0 rgba(0,0,0,0.5), inset 0px 0px 0px 2px #fff;
     color: #404040;
+    z-index: 10;
 }
 
 #wild-health {
     top: 30px;
     left: 40px;
     border-bottom-right-radius: 24px;
+    animation: slideInLeft 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
 }
 
 #player-health {
     bottom: 30px;
     right: 40px;
     border-top-left-radius: 24px;
+    animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+}
+
+@keyframes slideInLeft {
+    0% { transform: translateX(-300px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+    0% { transform: translateX(300px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInUp {
+    0% { transform: translateY(300px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInDown {
+    0% { transform: translateY(-300px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
 }
 
 .health-box > div:first-child {
