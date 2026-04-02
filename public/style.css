@@ -10,41 +10,71 @@ body {
     font-family: 'Press Start 2P', monospace, sans-serif;
 }
 
+/* CRT Scanline Overlay */
+#crt-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 4px, 6px 100%;
+    z-index: 9999;
+    pointer-events: none;
+}
+
 #lobby-container {
-    background-color: #f8f8f8;
-    border: 4px solid #333;
-    border-radius: 8px;
+    background-color: #f8e8c8;
+    border: 8px solid #686050;
+    border-radius: 16px;
     padding: 40px;
     text-align: center;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.5), inset 0 0 0 4px #fff;
+    color: #404040;
+    text-shadow: 1px 1px 0 #fff;
+    z-index: 100;
 }
 
 #lobby-container h1 {
-    color: #cc0000;
     margin-top: 0;
-    text-shadow: 2px 2px #ffcccc;
+    margin-bottom: 30px;
+    line-height: 1.5;
 }
 
 .lobby-controls button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: 2px solid #333;
+    background-color: white;
+    color: #404040;
+    padding: 12px 24px;
+    border: 4px solid #686050;
+    border-radius: 8px;
     cursor: pointer;
     font-family: inherit;
-    font-size: 16px;
-    margin: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    margin: 10px;
+    box-shadow: 4px 4px 0 #b8b0a0;
+    text-transform: uppercase;
 }
 
 .lobby-controls button:hover {
-    background-color: #45a049;
+    background-color: #e8e8e8;
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 #b8b0a0;
+}
+
+.lobby-controls button:active {
+    transform: translate(4px, 4px);
+    box-shadow: none;
 }
 
 .lobby-controls input {
-    padding: 10px;
-    font-size: 16px;
-    border: 2px solid #ccc;
+    padding: 12px;
+    font-size: 14px;
+    border: 4px solid #686050;
+    border-radius: 8px;
     font-family: inherit;
+    text-align: center;
+    background-color: #fff;
 }
 
 #lobbyMessage {
@@ -292,7 +322,7 @@ canvas {
     image-rendering: pixelated;
     z-index: 2;
     transform-origin: bottom center;
-    animation: slideInDown 0.6s ease-out forwards;
+    animation: slideInDown 0.6s ease-out forwards, floatBob 3s ease-in-out infinite alternate;
 }
 
 #player-sprite {
@@ -304,15 +334,20 @@ canvas {
     image-rendering: pixelated;
     z-index: 2;
     transform-origin: bottom center;
-    animation: slideInUp 0.6s ease-out forwards;
+    animation: slideInUp 0.6s ease-out forwards, floatBob 3s ease-in-out infinite alternate 1.5s;
+}
+
+@keyframes floatBob {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-10px); }
 }
 
 .health-box {
     position: absolute;
     background: #f8e8c8;
-    border: 4px solid #686050;
-    border-radius: 12px;
-    padding: 15px;
+    border: 4px solid #484030;
+    border-radius: 8px 16px;
+    padding: 10px 15px;
     width: 280px;
     box-shadow: 4px 4px 0 rgba(0,0,0,0.5), inset 0px 0px 0px 2px #fff;
     color: #404040;
@@ -322,14 +357,14 @@ canvas {
 #wild-health {
     top: 30px;
     left: 40px;
-    border-bottom-right-radius: 24px;
+    border-radius: 0 16px 0 16px;
     animation: slideInLeft 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
 }
 
 #player-health {
     bottom: 30px;
     right: 40px;
-    border-top-left-radius: 24px;
+    border-radius: 16px 0 16px 0;
     animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
 }
 
@@ -363,23 +398,39 @@ canvas {
     justify-content: space-between;
 }
 
-.hp-bar {
-    width: 100%;
-    height: 14px;
-    background-color: #484030;
+.hp-row {
+    display: flex;
+    align-items: center;
+    background-color: #506858;
+    border-radius: 10px;
+    padding: 2px 4px;
     border: 2px solid #e8e8e8;
-    border-radius: 7px;
+    box-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+
+.hp-label {
+    color: #f8d030;
+    font-size: 10px;
+    margin-right: 6px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+}
+
+.hp-bar {
+    flex: 1;
+    height: 8px;
+    background-color: #484030;
+    border-radius: 4px;
     position: relative;
     overflow: hidden;
+    border: 1px solid #282828;
 }
 
 .hp-fill {
     height: 100%;
-    background-color: #00ff00;
+    background-color: #58d854;
     width: 100%;
     transition: width 0.5s ease-out, background-color 0.5s ease-out;
-    border-radius: 4px;
-    box-shadow: inset 0px 3px 0 rgba(255,255,255,0.4);
+    border-radius: 2px;
 }
 
 #battle-menu {

@@ -7,8 +7,11 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Retro Scanlines Overlay -->
+    <div id="crt-overlay"></div>
+
     <div id="lobby-container">
-        <h1>Pokemon MMO</h1>
+        <h1><span style="color:#FFDE00; text-shadow: 2px 2px 0 #3B4CCA, -2px -2px 0 #3B4CCA, 2px -2px 0 #3B4CCA, -2px 2px 0 #3B4CCA;">POKEMON</span><br><span style="color:white; font-size: 16px;">MMO ONLINE</span></h1>
         <div class="lobby-controls" id="loginForm">
             <input type="text" id="usernameInput" placeholder="Username"><br><br>
             <input type="password" id="passwordInput" placeholder="Password"><br><br>
@@ -101,7 +104,7 @@
                         <span id="wild-name">Wild Pokemon</span>
                         <span id="wild-lvl">Lv.5</span>
                     </div>
-                    <div class="hp-bar"><div class="hp-fill" id="wild-hp-fill"></div></div>
+                    <div class="hp-row"><span class="hp-label">HP</span><div class="hp-bar"><div class="hp-fill" id="wild-hp-fill"></div></div></div>
                 </div>
                 <img id="wild-sprite" src="" alt="Wild Pokemon" style="position: absolute; right: 80px; top: 30px; width: 150px; z-index: 2;">
 
@@ -111,7 +114,7 @@
                         <span id="wild-name-2">Wild Pokemon</span>
                         <span id="wild-lvl-2">Lv.5</span>
                     </div>
-                    <div class="hp-bar"><div class="hp-fill" id="wild-hp-fill-2"></div></div>
+                    <div class="hp-row"><span class="hp-label">HP</span><div class="hp-bar"><div class="hp-fill" id="wild-hp-fill-2"></div></div></div>
                 </div>
                 <img id="wild-sprite-2" src="" alt="Wild Pokemon 2" style="display: none; position: absolute; right: 240px; top: 10px; width: 120px; z-index: 1;">
 
@@ -122,8 +125,8 @@
                         <span id="player-name">Your Pokemon</span>
                         <span id="player-lvl">Lv.5</span>
                     </div>
-                    <div class="hp-bar"><div class="hp-fill" id="player-hp-fill"></div></div>
-                    <div id="player-hp-text" style="font-size: 12px; margin-top: 5px; text-align: right; font-weight: bold;">20/20</div>
+                    <div class="hp-row"><span class="hp-label">HP</span><div class="hp-bar"><div class="hp-fill" id="player-hp-fill"></div></div></div>
+                    <div id="player-hp-text" style="font-size: 12px; margin-top: 5px; text-align: right; font-weight: bold;">20/ 20</div>
                 </div>
 
                 <!-- Player 2 (for 2v2) -->
@@ -133,8 +136,8 @@
                         <span id="player-name-2">Your Pokemon</span>
                         <span id="player-lvl-2">Lv.5</span>
                     </div>
-                    <div class="hp-bar"><div class="hp-fill" id="player-hp-fill-2"></div></div>
-                    <div id="player-hp-text-2" style="font-size: 12px; margin-top: 5px; text-align: right; font-weight: bold;">20/20</div>
+                    <div class="hp-row"><span class="hp-label">HP</span><div class="hp-bar"><div class="hp-fill" id="player-hp-fill-2"></div></div></div>
+                    <div id="player-hp-text-2" style="font-size: 12px; margin-top: 5px; text-align: right; font-weight: bold;">20/ 20</div>
                 </div>
             </div>
             <div id="battle-menu">
