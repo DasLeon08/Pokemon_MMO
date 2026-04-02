@@ -1,0 +1,50 @@
+{
+  "Player5": {
+    "password": "pass",
+    "playerData": {
+      "x": 100,
+      "y": 100,
+      "color": "#73503a",
+      "level": 1,
+      "exp": 0,
+      "map": "town1",
+      "myMoney": 300,
+      "myBadges": 0,
+      "myInventory": {
+        "potion": 3,
+        "superPotion": 0,
+        "pokeball": 5,
+        "greatball": 0,
+        "ultraball": 0,
+        "masterball": 0
+      },
+      "myTeam": [],
+      "myBox": [],
+      "defeatedTrainers": {}
+    }
+  },
+  "PlayerDouble": {
+    "password": "pass",
+    "playerData": {
+      "x": 100,
+      "y": 100,
+      "color": "#3c8b8f",
+      "level": 1,
+      "exp": 0,
+      "map": "town1",
+      "myMoney": 300,
+      "myBadges": 0,
+      "myInventory": {
+        "potion": 3,
+        "superPotion": 0,
+        "pokeball": 5,
+        "greatball": 0,
+        "ultraball": 0,
+        "masterball": 0
+      },
+      "myTeam": [],
+      "myBox": [],
+      "defeatedTrainers": {}
+    }
+  }
+}

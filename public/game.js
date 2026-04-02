@@ -7,6 +7,12 @@ const uiOverlay = document.getElementById('ui-overlay');
 const createRoomBtn = document.getElementById('createRoomBtn');
 const joinRoomBtn = document.getElementById('joinRoomBtn');
 const roomInput = document.getElementById('roomInput');
+const loginBtn = document.getElementById('loginBtn');
+const usernameInput = document.getElementById('usernameInput');
+const passwordInput = document.getElementById('passwordInput');
+const loginForm = document.getElementById('loginForm');
+const roomControls = document.getElementById('roomControls');
+const welcomeName = document.getElementById('welcomeName');
 const lobbyMessage = document.getElementById('lobbyMessage');
 const levelDisplay = document.getElementById('levelDisplay');
 const expDisplay = document.getElementById('expDisplay');
@@ -113,6 +119,9 @@ function buildTown1() {
     mapObjects.push({ type: 'house', x: 5 * TILE_SIZE, y: 15 * TILE_SIZE }); // Player's House
     mapObjects.push({ type: 'house', x: 16 * TILE_SIZE, y: 15 * TILE_SIZE }); // Rival's House
     mapObjects.push({ type: 'house', x: 10 * TILE_SIZE, y: 5 * TILE_SIZE }); // Professor Lab (Top center)
+
+    // Add Healing Center & PC
+    mapObjects.push({ type: 'center', x: 10 * TILE_SIZE, y: 10 * TILE_SIZE });
 
     // Signs
     mapObjects.push({ type: 'sign', x: 7 * TILE_SIZE, y: 18 * TILE_SIZE, text: "Pallet Town: Shades of your journey await!" });
@@ -224,8 +233,9 @@ function buildTown2() {
     mapObjects.push({ type: 'house', x: 20 * TILE_SIZE, y: 8 * TILE_SIZE });
     mapObjects.push({ type: 'house', x: 12 * TILE_SIZE, y: 35 * TILE_SIZE });
 
-    // Add Shop (Pokemart) centrally located
+    // Add Shop (Pokemart) and Center centrally located
     mapObjects.push({ type: 'house', x: 16 * TILE_SIZE, y: 22 * TILE_SIZE, isShop: true });
+    mapObjects.push({ type: 'center', x: 20 * TILE_SIZE, y: 22 * TILE_SIZE });
 
     // Trainers
     mapObjects.push({
@@ -354,8 +364,9 @@ function buildTown3() {
     mapObjects.push({ type: 'house', x: 40 * TILE_SIZE, y: 5 * TILE_SIZE });
     mapObjects.push({ type: 'house', x: 5 * TILE_SIZE, y: 40 * TILE_SIZE });
 
-    // Huge Pokemart
+    // Huge Pokemart & Center
     mapObjects.push({ type: 'house', x: 45 * TILE_SIZE, y: 40 * TILE_SIZE, isShop: true });
+    mapObjects.push({ type: 'center', x: 45 * TILE_SIZE, y: 33 * TILE_SIZE });
 
     // Signs
     mapObjects.push({ type: 'sign', x: 30 * TILE_SIZE, y: 12 * TILE_SIZE, text: "Cerulean City: A Floral City Surrounded by Water" });
@@ -373,6 +384,96 @@ function buildTown3() {
     mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === -TILE_SIZE/2 && o.y >= 12*TILE_SIZE && o.y <= 14*TILE_SIZE));
 
     createPortal(20, 13 * TILE_SIZE + 16, 'route2', 'To Route 2', 118 * TILE_SIZE, 25 * TILE_SIZE);
+}
+
+function buildRoute3() {
+    clearMap();
+    MAP_COLS = 60;
+    MAP_ROWS = 30; // Horizontal route
+    fillMapGrid(0);
+
+    // Winding Path from left to right
+    for (let c=0; c<20; c++) { mapGrid[15][c] = 1; mapGrid[16][c] = 1; }
+    for (let r=10; r<=15; r++) { mapGrid[r][19] = 1; mapGrid[r][20] = 1; }
+    for (let c=19; c<40; c++) { mapGrid[10][c] = 1; mapGrid[11][c] = 1; }
+    for (let r=10; r<=20; r++) { mapGrid[r][39] = 1; mapGrid[r][40] = 1; }
+    for (let c=39; c<MAP_COLS; c++) { mapGrid[20][c] = 1; mapGrid[21][c] = 1; }
+
+    // Tall grass patches
+    for(let r=5; r<10; r++) { for(let c=5; c<15; c++) { mapGrid[r][c] = 6; } }
+    for(let r=20; r<25; r++) { for(let c=25; c<35; c++) { mapGrid[r][c] = 6; } }
+    for(let r=5; r<15; r++) { for(let c=45; c<55; c++) { mapGrid[r][c] = 6; } }
+
+    // Trainers
+    mapObjects.push({
+        type: 'trainer', id: 'route3_lass', name: 'Lass Robin',
+        x: 10 * TILE_SIZE, y: 12 * TILE_SIZE,
+        team: [generatePokemon(43, 12), generatePokemon(44, 14)] // Oddish, Gloom
+    });
+    mapObjects.push({
+        type: 'trainer', id: 'route3_youngster', name: 'Youngster Ben',
+        x: 30 * TILE_SIZE, y: 15 * TILE_SIZE,
+        team: [generatePokemon(19, 15)] // Rattata
+    });
+
+    mapObjects.push({ type: 'sign', x: 5 * TILE_SIZE, y: 13 * TILE_SIZE, text: "Route 3 - Heading towards Vermilion City" });
+
+    buildBorderTrees();
+
+    // Open path West to Town 3
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === -TILE_SIZE/2 && o.y >= 15*TILE_SIZE && o.y <= 16*TILE_SIZE));
+    // Open path East to Town 4
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === (MAP_COLS-1)*TILE_SIZE && o.y >= 20*TILE_SIZE && o.y <= 21*TILE_SIZE));
+
+    createPortal(20, 16 * TILE_SIZE + 16, 'town3', 'To Cerulean City', 58 * TILE_SIZE, 50 * TILE_SIZE);
+    createPortal(MAP_COLS * TILE_SIZE - 20, 20 * TILE_SIZE + 16, 'town4', 'To Vermilion City', 50, 15 * TILE_SIZE);
+}
+
+function buildTown4() {
+    clearMap();
+    MAP_COLS = 50;
+    MAP_ROWS = 50;
+    fillMapGrid(0);
+
+    // Ocean at the bottom
+    for(let r=35; r<MAP_ROWS; r++) {
+        for(let c=0; c<MAP_COLS; c++) {
+            mapGrid[r][c] = 4; // Water
+        }
+    }
+
+    // Docks (Bridges extending into water)
+    for(let r=35; r<45; r++) {
+        mapGrid[r][24] = 5; mapGrid[r][25] = 5;
+    }
+
+    // Main paths
+    for(let c=0; c<MAP_COLS; c++) { mapGrid[15][c] = 1; mapGrid[16][c] = 1; }
+    for(let r=15; r<35; r++) { mapGrid[r][24] = 1; mapGrid[r][25] = 1; }
+
+    // Buildings
+    mapObjects.push({ type: 'house', x: 10 * TILE_SIZE, y: 5 * TILE_SIZE });
+    mapObjects.push({ type: 'house', x: 30 * TILE_SIZE, y: 5 * TILE_SIZE });
+    mapObjects.push({ type: 'house', x: 10 * TILE_SIZE, y: 20 * TILE_SIZE });
+
+    // Pokemart & Center
+    mapObjects.push({ type: 'house', x: 35 * TILE_SIZE, y: 20 * TILE_SIZE, isShop: true });
+    mapObjects.push({ type: 'center', x: 35 * TILE_SIZE, y: 10 * TILE_SIZE });
+
+    // Electric Gym Entrance
+    mapObjects.push({ type: 'house', x: 20 * TILE_SIZE, y: 25 * TILE_SIZE });
+    createPortal(21 * TILE_SIZE, 28 * TILE_SIZE, 'gym3', 'Vermilion Gym', 12 * TILE_SIZE, 22 * TILE_SIZE);
+
+    // Signs
+    mapObjects.push({ type: 'sign', x: 25 * TILE_SIZE, y: 12 * TILE_SIZE, text: "Vermilion City: The Port of Exquisite Sunsets" });
+    mapObjects.push({ type: 'sign', x: 25 * TILE_SIZE, y: 28 * TILE_SIZE, text: "Vermilion Gym - Leader: Lt. Surge" });
+
+    buildBorderTrees();
+
+    // Open path West to Route 3
+    mapObjects = mapObjects.filter(o => !(o.type === 'tree' && o.x === -TILE_SIZE/2 && o.y >= 15*TILE_SIZE && o.y <= 16*TILE_SIZE));
+
+    createPortal(20, 16 * TILE_SIZE + 16, 'route3', 'To Route 3', 58 * TILE_SIZE, 21 * TILE_SIZE);
 }
 
 function buildGymMap() {
@@ -477,6 +578,51 @@ function buildGym2() {
     });
 
     createPortal(400, 750, 'town3', 'Exit', 11 * TILE_SIZE, 49 * TILE_SIZE);
+}
+
+function buildGym3() {
+    clearMap();
+    MAP_COLS = 25;
+    MAP_ROWS = 25;
+    // Fill with stone floor
+    for(let r=0; r<MAP_ROWS; r++) {
+        let row = [];
+        for(let c=0; c<MAP_COLS; c++) {
+            row.push(2);
+        }
+        mapGrid.push(row);
+    }
+
+    // Path
+    for(let r=3; r<MAP_ROWS; r++) {
+        mapGrid[r][11] = 1;
+        mapGrid[r][12] = 1;
+        mapGrid[r][13] = 1;
+    }
+
+    // Add Walls (Border)
+    for(let c=0; c<MAP_COLS; c++) { mapGrid[0][c] = 3; mapGrid[MAP_ROWS - 1][c] = 3; }
+    for(let r=0; r<MAP_ROWS; r++) { mapGrid[r][0] = 3; mapGrid[r][MAP_COLS - 1] = 3; }
+
+    // Trash cans (simulate with small walls)
+    mapGrid[10][8] = 3; mapGrid[10][16] = 3;
+    mapGrid[15][8] = 3; mapGrid[15][16] = 3;
+
+    // Add Gym Trainers
+    mapObjects.push({
+        type: 'trainer', id: 'gym_trainer_electric1', name: 'Sailor Dwayne',
+        x: 9 * TILE_SIZE, y: 15 * TILE_SIZE,
+        team: [generatePokemon(81, 21), generatePokemon(100, 21)] // Magnemite, Voltorb
+    });
+
+    mapObjects.push({
+        type: 'trainer', id: 'gym_boss_surge', name: 'Gym Leader Lt. Surge',
+        x: 12 * TILE_SIZE, y: 3 * TILE_SIZE,
+        badge: true, badgeName: 'THUNDER BADGE',
+        team: [generatePokemon(26, 24)] // Raichu
+    });
+
+    createPortal(400, 750, 'town4', 'Exit', 21 * TILE_SIZE, 29 * TILE_SIZE);
 }
 
 function buildRockDungeon() {
@@ -593,7 +739,7 @@ function generateCollisionsFromGrid() {
     for (const obj of mapObjects) {
         if (obj.type === 'tree') {
             boundaries.push({ x: obj.x, y: obj.y, width: TILE_SIZE, height: TILE_SIZE });
-        } else if (obj.type === 'house') {
+        } else if (obj.type === 'house' || obj.type === 'center') {
             boundaries.push({ x: obj.x, y: obj.y, width: TILE_SIZE * 2, height: TILE_SIZE * 2 });
         } else if (obj.type === 'sign' || obj.type === 'trainer') {
             boundaries.push({ x: obj.x, y: obj.y, width: TILE_SIZE, height: TILE_SIZE });
@@ -657,8 +803,8 @@ function drawMap() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
         ctx.beginPath();
         let shadowWidth = TILE_SIZE/2;
-        if (obj.type === 'house') shadowWidth = TILE_SIZE;
-        ctx.ellipse(obj.x + (obj.type==='house'?TILE_SIZE:TILE_SIZE/2), obj.y + (obj.type==='house'?TILE_SIZE*2-10:TILE_SIZE - 5), shadowWidth, shadowWidth/2, 0, 0, Math.PI * 2);
+        if (obj.type === 'house' || obj.type === 'center') shadowWidth = TILE_SIZE;
+        ctx.ellipse(obj.x + ((obj.type==='house'||obj.type==='center')?TILE_SIZE:TILE_SIZE/2), obj.y + ((obj.type==='house'||obj.type==='center')?TILE_SIZE*2-10:TILE_SIZE - 5), shadowWidth, shadowWidth/2, 0, 0, Math.PI * 2);
         ctx.fill();
 
         if (obj.type === 'trainer') {
@@ -672,10 +818,10 @@ function drawMap() {
             ctx.fill();
             ctx.fillStyle = '#705848';
             ctx.fillRect(obj.x + TILE_SIZE/2 - 5, obj.y + TILE_SIZE/2, 10, TILE_SIZE/2);
-        } else if (obj.type === 'house') {
-            ctx.fillStyle = '#F8D030';
+        } else if (obj.type === 'house' || obj.type === 'center') {
+            ctx.fillStyle = obj.type === 'center' ? '#ffffff' : '#F8D030';
             ctx.fillRect(obj.x, obj.y + TILE_SIZE, TILE_SIZE * 2, TILE_SIZE);
-            ctx.fillStyle = obj.isShop ? '#6890F0' : '#F08030';
+            ctx.fillStyle = obj.isShop ? '#6890F0' : (obj.type === 'center' ? '#ff3333' : '#F08030');
             ctx.beginPath();
             ctx.moveTo(obj.x, obj.y + TILE_SIZE);
             ctx.lineTo(obj.x + TILE_SIZE, obj.y);
@@ -688,6 +834,10 @@ function drawMap() {
                 ctx.fillStyle = 'white';
                 ctx.font = '10px Arial';
                 ctx.fillText('MART', obj.x + TILE_SIZE, obj.y + TILE_SIZE - 10);
+            } else if (obj.type === 'center') {
+                ctx.fillStyle = 'white';
+                ctx.font = '10px Arial';
+                ctx.fillText('HEAL/PC', obj.x + TILE_SIZE - 8, obj.y + TILE_SIZE - 10);
             }
         } else if (obj.type === 'sign') {
             ctx.fillStyle = '#C0A080';
@@ -732,17 +882,22 @@ function drawPlayerSprite(ctx, x, y, color, facing = 'down', walkFrame = 0, isLo
 // Game State
 let players = {};
 let myId = null;
+let myUsername = null;
 let currentRoomId = null;
 let currentMap = null;
 let inBattle = false;
 let myTeam = [];
+let myBox = [];
 let wildPokemon = null;
+let wildPokemon2 = null; // For 2v2
 let activePokemon = null;
+let activePokemon2 = null; // For 2v2
+let isDoubleBattle = false;
 let turnActionLocked = false;
 let defeatedTrainers = {};
 let myBadges = 0;
 let myMoney = 300;
-let myInventory = { potion: 3, superPotion: 0, pokeball: 5 };
+let myInventory = { potion: 3, superPotion: 0, pokeball: 5, greatball: 0, ultraball: 0, masterball: 0 };
 let inShop = false;
 
 // Trainer Battle State
@@ -752,6 +907,55 @@ let opponentIndex = 0;
 let opponentTrainer = null;
 
 const SPEED = 0.2;
+
+// --- Audio System (Web Audio API Synthesizer) ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playTone(freq, type, duration, vol = 0.1) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+
+const sfx = {
+    attack: () => {
+        playTone(300, 'square', 0.1, 0.1);
+        setTimeout(() => playTone(150, 'square', 0.1, 0.1), 100);
+    },
+    hit: () => {
+        playTone(100, 'sawtooth', 0.2, 0.2);
+    },
+    heal: () => {
+        playTone(400, 'sine', 0.1, 0.1);
+        setTimeout(() => playTone(600, 'sine', 0.1, 0.1), 100);
+        setTimeout(() => playTone(800, 'sine', 0.2, 0.1), 200);
+    },
+    catchSuccess: () => {
+        playTone(500, 'square', 0.2, 0.1);
+        setTimeout(() => playTone(700, 'square', 0.2, 0.1), 200);
+        setTimeout(() => playTone(900, 'square', 0.4, 0.1), 400);
+    },
+    levelUp: () => {
+        playTone(440, 'triangle', 0.1, 0.1);
+        setTimeout(() => playTone(440, 'triangle', 0.1, 0.1), 150);
+        setTimeout(() => playTone(587, 'triangle', 0.3, 0.1), 300);
+    },
+    faint: () => {
+        playTone(200, 'sawtooth', 0.3, 0.2);
+        setTimeout(() => playTone(100, 'sawtooth', 0.4, 0.2), 200);
+    }
+};
 
 // --- Battle System ---
 const battleContainer = document.getElementById('battle-container');
@@ -833,13 +1037,23 @@ function startBattle(trainer = null) {
         // Only generate new if not already set by external test scripts
         if (!wildPokemon || wildPokemon.hp <= 0) {
             // Generate Wild Pokemon (dynamically scaled)
-            // We'll pick random fully-evolved or base stages. To keep it simple, just a random number 1 to 649!
             const wildId = Math.floor(Math.random() * 949) + 1;
+            const wildLvl = Math.max(2, teamAvgLevel + Math.floor(Math.random() * 5) - 2);
+            wildPokemon = generatePokemon(wildId, wildLvl, Math.random() < 0.05);
 
-            // Wild pokemon are usually slightly weaker or equal to the player
-            const wildLvl = Math.max(2, teamAvgLevel + Math.floor(Math.random() * 5) - 2); // PlayerAvgLevel +/- 2
-            const isShiny = Math.random() < 0.05; // 5% chance shiny for fun
-            wildPokemon = generatePokemon(wildId, wildLvl, isShiny);
+            // 20% chance for a wild double battle if player has >= 2 alive pokemon
+            const consciousCount = myTeam.filter(p => p.hp > 0).length;
+            if (consciousCount >= 2 && Math.random() < 0.2) {
+                isDoubleBattle = true;
+                const wildId2 = Math.floor(Math.random() * 949) + 1;
+                const wildLvl2 = Math.max(2, teamAvgLevel + Math.floor(Math.random() * 5) - 2);
+                wildPokemon2 = generatePokemon(wildId2, wildLvl2, Math.random() < 0.05);
+                activePokemon2 = myTeam.filter(p => p.hp > 0)[1];
+            } else {
+                isDoubleBattle = false;
+                wildPokemon2 = null;
+                activePokemon2 = null;
+            }
         }
         document.getElementById('btn-catch').style.display = 'inline-block';
     }
@@ -869,23 +1083,39 @@ function startBattle(trainer = null) {
 }
 
 function updateBattleUI() {
+    // Setup visibility for 2v2 elements
+    document.getElementById('wild-sprite-2').style.display = isDoubleBattle ? 'block' : 'none';
+    document.getElementById('wild-health-2').style.display = isDoubleBattle ? 'block' : 'none';
+    document.getElementById('player-sprite-2').style.display = isDoubleBattle ? 'block' : 'none';
+    document.getElementById('player-health-2').style.display = isDoubleBattle ? 'block' : 'none';
+
     wildSprite.src = wildPokemon.frontSprite;
     playerSprite.src = activePokemon.backSprite;
-
-    // Add shiny sparkles effect later possibly, for now just use the text
     wildName.innerText = wildPokemon.name;
     wildLvl.innerText = `Lv.${wildPokemon.level}`;
     playerName.innerText = activePokemon.name;
     playerLvl.innerText = `Lv.${activePokemon.level}`;
-
     wildHpFill.style.width = `${Math.max(0, (wildPokemon.hp / wildPokemon.maxHp) * 100)}%`;
     playerHpFill.style.width = `${Math.max(0, (activePokemon.hp / activePokemon.maxHp) * 100)}%`;
-
-    // Exact HP display
     playerHpText.innerText = `${Math.max(0, activePokemon.hp)} / ${activePokemon.maxHp}`;
+
+    if (isDoubleBattle && wildPokemon2 && activePokemon2) {
+        document.getElementById('wild-sprite-2').src = wildPokemon2.frontSprite;
+        document.getElementById('player-sprite-2').src = activePokemon2.backSprite;
+        document.getElementById('wild-name-2').innerText = wildPokemon2.name;
+        document.getElementById('wild-lvl-2').innerText = `Lv.${wildPokemon2.level}`;
+        document.getElementById('player-name-2').innerText = activePokemon2.name;
+        document.getElementById('player-lvl-2').innerText = `Lv.${activePokemon2.level}`;
+        document.getElementById('wild-hp-fill-2').style.width = `${Math.max(0, (wildPokemon2.hp / wildPokemon2.maxHp) * 100)}%`;
+        document.getElementById('player-hp-fill-2').style.width = `${Math.max(0, (activePokemon2.hp / activePokemon2.maxHp) * 100)}%`;
+        document.getElementById('player-hp-text-2').innerText = `${Math.max(0, activePokemon2.hp)} / ${activePokemon2.maxHp}`;
+
+        document.getElementById('wild-hp-fill-2').style.backgroundColor = wildPokemon2.hp / wildPokemon2.maxHp < 0.2 ? 'red' : (wildPokemon2.hp / wildPokemon2.maxHp < 0.5 ? 'orange' : '#00ff00');
+        document.getElementById('player-hp-fill-2').style.backgroundColor = activePokemon2.hp / activePokemon2.maxHp < 0.2 ? 'red' : (activePokemon2.hp / activePokemon2.maxHp < 0.5 ? 'orange' : '#00ff00');
+    }
+
     btnPotionCount.innerText = myInventory.potion;
     btnSuperPotionCount.innerText = myInventory.superPotion;
-    btnPokeballCount.innerText = myInventory.pokeball;
 
     // Color logic
     wildHpFill.style.backgroundColor = wildPokemon.hp / wildPokemon.maxHp < 0.2 ? 'red' : (wildPokemon.hp / wildPokemon.maxHp < 0.5 ? 'orange' : '#00ff00');
@@ -916,22 +1146,44 @@ function processTurn(action) {
         return;
     }
 
-    if (action === 'catch') {
-        if (myInventory.pokeball > 0) {
-            myInventory.pokeball -= 1;
+    if (action.startsWith('catch_')) {
+        const ballType = action.split('_')[1];
+
+        if (myInventory[ballType] > 0) {
+            myInventory[ballType] -= 1;
             updateMyUI();
             updateBattleUI();
-            const catchRate = 1 - (wildPokemon.hp / wildPokemon.maxHp);
-            if (Math.random() < catchRate + 0.1) {
+
+            let ballMult = 1;
+            if (ballType === 'greatball') ballMult = 1.5;
+            if (ballType === 'ultraball') ballMult = 2;
+
+            const catchRate = (1 - (wildPokemon.hp / wildPokemon.maxHp)) * ballMult;
+            const success = (ballType === 'masterball') || (Math.random() < catchRate + 0.1);
+
+            if (success) {
+                sfx.catchSuccess();
                 battleMessage.innerText = `Gotcha! ${wildPokemon.name} was caught!`;
-                myTeam.push(wildPokemon);
-                endBattle();
+
+                if (myTeam.length < 6) {
+                    myTeam.push(wildPokemon);
+                    setTimeout(() => {
+                        battleMessage.innerText = `${wildPokemon.name} was added to your party!`;
+                        endBattle();
+                    }, 1500);
+                } else {
+                    myBox.push(wildPokemon);
+                    setTimeout(() => {
+                        battleMessage.innerText = `${wildPokemon.name} was sent to your PC Box!`;
+                        endBattle();
+                    }, 1500);
+                }
             } else {
                 battleMessage.innerText = `Oh no! ${wildPokemon.name} broke free!`;
                 setTimeout(wildAttack, 1000);
             }
         } else {
-            battleMessage.innerText = "You don't have any Pokeballs left!";
+            battleMessage.innerText = `You don't have any ${ballType}s left!`;
             setTimeout(() => { turnActionLocked = false; }, 1500);
         }
         return;
@@ -940,6 +1192,7 @@ function processTurn(action) {
     if (action === 'potion') {
         if (myInventory.potion > 0) {
             myInventory.potion -= 1;
+            sfx.heal();
             activePokemon.hp = Math.min(activePokemon.maxHp, activePokemon.hp + 20);
             battleMessage.innerText = `You used a Potion! ${activePokemon.name} recovered 20 HP.`;
             updateBattleUI();
@@ -955,6 +1208,7 @@ function processTurn(action) {
     if (action === 'superpotion') {
         if (myInventory.superPotion > 0) {
             myInventory.superPotion -= 1;
+            sfx.heal();
             activePokemon.hp = Math.min(activePokemon.maxHp, activePokemon.hp + 50);
             battleMessage.innerText = `You used a Super Potion! ${activePokemon.name} recovered 50 HP.`;
             updateBattleUI();
@@ -973,31 +1227,48 @@ function processTurn(action) {
         const wildDex = POKEDEX[wildPokemon.speciesId];
         const multiplier = getMultiplier(moveData.type, wildDex.type1, wildDex.type2);
 
+        // Select target
+        let targetWild = wildPokemon;
+        let targetImg = document.getElementById('wild-sprite');
+        if (isDoubleBattle && wildPokemon2 && wildPokemon2.hp > 0) {
+            if (wildPokemon.hp <= 0 || Math.random() > 0.5) {
+                targetWild = wildPokemon2;
+                targetImg = document.getElementById('wild-sprite-2');
+            }
+        }
+
         let aAtk = moveData.category === 'special' ? activePokemon.spatk : activePokemon.atk;
-        let dDef = moveData.category === 'special' ? wildPokemon.spdef : wildPokemon.def;
+        let dDef = moveData.category === 'special' ? targetWild.spdef : targetWild.def;
 
         const damage = Math.max(1, Math.floor((((2 * activePokemon.level / 5 + 2) * moveData.power * (aAtk / dDef)) / 50 + 2) * multiplier));
 
-        wildPokemon.hp -= damage;
+        targetWild.hp -= damage;
         let effMsg = multiplier > 1 ? " It's super effective!" : (multiplier < 1 ? " It's not very effective..." : "");
-        battleMessage.innerText = `${activePokemon.name} used ${activePokemon.move}!${effMsg}`;
+        battleMessage.innerText = `${activePokemon.name} used ${activePokemon.move} on ${targetWild.name}!${effMsg}`;
+
+        sfx.attack();
+        setTimeout(sfx.hit, 200);
 
         // Attack Animation Flash
-        const wildImg = document.getElementById('wild-sprite');
-        wildImg.style.transition = 'filter 0.1s';
-        wildImg.style.filter = 'brightness(0) invert(1)';
-        setTimeout(() => { wildImg.style.filter = 'none'; }, 100);
-        setTimeout(() => { wildImg.style.filter = 'brightness(0) invert(1)'; }, 200);
-        setTimeout(() => { wildImg.style.filter = 'none'; }, 300);
+        targetImg.style.transition = 'filter 0.1s';
+        targetImg.style.filter = 'brightness(0) invert(1)';
+        setTimeout(() => { targetImg.style.filter = 'none'; }, 100);
+        setTimeout(() => { targetImg.style.filter = 'brightness(0) invert(1)'; }, 200);
+        setTimeout(() => { targetImg.style.filter = 'none'; }, 300);
 
         updateBattleUI();
 
-        if (wildPokemon.hp <= 0) {
-            wildPokemon.hp = 0;
+        if (targetWild.hp <= 0) {
+            targetWild.hp = 0;
+            sfx.faint();
             const prefix = opponentIsTrainer ? "Opponent's" : "Wild";
-            battleMessage.innerText = `${prefix} ${wildPokemon.name} fainted!`;
-            setTimeout(awardExp, 1000);
-            return;
+            battleMessage.innerText = `${prefix} ${targetWild.name} fainted!`;
+
+            // Check if ALL wild are dead
+            if (wildPokemon.hp <= 0 && (!isDoubleBattle || wildPokemon2.hp <= 0)) {
+                setTimeout(awardExp, 1000);
+                return;
+            }
         }
 
         setTimeout(wildAttack, 1500);
@@ -1005,44 +1276,81 @@ function processTurn(action) {
 }
 
 function wildAttack() {
-    if (!inBattle || wildPokemon.hp <= 0) return;
+    if (!inBattle) return;
 
-    const moveData = MOVES[wildPokemon.move] || MOVES['Tackle'];
-    const activeDex = POKEDEX[activePokemon.speciesId];
-    const multiplier = getMultiplier(moveData.type, activeDex.type1, activeDex.type2);
+    // Who is attacking?
+    let attacker = wildPokemon;
+    if (wildPokemon.hp <= 0) {
+        if (isDoubleBattle && wildPokemon2 && wildPokemon2.hp > 0) attacker = wildPokemon2;
+        else return; // All dead
+    } else if (isDoubleBattle && wildPokemon2 && wildPokemon2.hp > 0 && Math.random() > 0.5) {
+        attacker = wildPokemon2;
+    }
 
-    let aAtk = moveData.category === 'special' ? wildPokemon.spatk : wildPokemon.atk;
-    let dDef = moveData.category === 'special' ? activePokemon.spdef : activePokemon.def;
+    // Who is defending?
+    let defender = activePokemon;
+    let defImg = document.getElementById('player-sprite');
+    if (isDoubleBattle && activePokemon2 && activePokemon2.hp > 0) {
+        if (activePokemon.hp <= 0 || Math.random() > 0.5) {
+            defender = activePokemon2;
+            defImg = document.getElementById('player-sprite-2');
+        }
+    }
+    if (defender.hp <= 0) return; // Wait for switch
 
-    const damage = Math.max(1, Math.floor((((2 * wildPokemon.level / 5 + 2) * moveData.power * (aAtk / dDef)) / 50 + 2) * multiplier));
+    const moveData = MOVES[attacker.move] || MOVES['Tackle'];
+    const defDex = POKEDEX[defender.speciesId];
+    const multiplier = getMultiplier(moveData.type, defDex.type1, defDex.type2);
 
-    activePokemon.hp -= damage;
+    let aAtk = moveData.category === 'special' ? attacker.spatk : attacker.atk;
+    let dDef = moveData.category === 'special' ? defender.spdef : defender.def;
+
+    const damage = Math.max(1, Math.floor((((2 * attacker.level / 5 + 2) * moveData.power * (aAtk / dDef)) / 50 + 2) * multiplier));
+
+    defender.hp -= damage;
     let effMsg = multiplier > 1 ? " It's super effective!" : (multiplier < 1 ? " It's not very effective..." : "");
-    battleMessage.innerText = `${opponentIsTrainer ? "Opponent's" : "Wild"} ${wildPokemon.name} used ${wildPokemon.move}!${effMsg}`;
+    battleMessage.innerText = `${opponentIsTrainer ? "Opponent's" : "Wild"} ${attacker.name} used ${attacker.move} on ${defender.name}!${effMsg}`;
+
+    sfx.attack();
+    setTimeout(sfx.hit, 200);
 
     // Attack Animation Shake & Flash
-    const playerImg = document.getElementById('player-sprite');
-    playerImg.style.transition = 'transform 0.05s';
-    playerImg.style.transform = 'translateX(-10px)';
-    setTimeout(() => { playerImg.style.transform = 'translateX(10px)'; }, 50);
-    setTimeout(() => { playerImg.style.transform = 'translateX(-10px)'; }, 100);
-    setTimeout(() => { playerImg.style.transform = 'translateX(0)'; }, 150);
+    defImg.style.transition = 'transform 0.05s';
+    defImg.style.transform = 'translateX(-10px)';
+    setTimeout(() => { defImg.style.transform = 'translateX(10px)'; }, 50);
+    setTimeout(() => { defImg.style.transform = 'translateX(-10px)'; }, 100);
+    setTimeout(() => { defImg.style.transform = 'translateX(0)'; }, 150);
 
     updateBattleUI();
 
-    if (activePokemon.hp <= 0) {
-        activePokemon.hp = 0;
-        battleMessage.innerText = `${activePokemon.name} fainted! You blacked out!`;
-        // Send player back to start and heal
-        currentMap = 'town1';
-        players[myId].x = 5 * TILE_SIZE; // Player house in Town 1
-        players[myId].y = 15 * TILE_SIZE + TILE_SIZE;
-        activePokemon.hp = activePokemon.maxHp;
-        loadMap(currentMap);
-        socket.emit('changeMap', { map: currentMap, x: players[myId].x, y: players[myId].y });
-        endBattle();
+    if (defender.hp <= 0) {
+        defender.hp = 0;
+        sfx.faint();
+
+        // Check if player has any conscious pokemon left
+        const hasAlive = myTeam.some(p => p.hp > 0);
+
+        if (!hasAlive) {
+            battleMessage.innerText = `${defender.name} fainted! You have no more usable Pokemon! You blacked out!`;
+            // Heal entire team
+            myTeam.forEach(p => p.hp = p.maxHp);
+            // Send player back to start
+            currentMap = 'town1';
+            players[myId].x = 5 * TILE_SIZE; // Player house in Town 1
+            players[myId].y = 15 * TILE_SIZE + TILE_SIZE;
+            loadMap(currentMap);
+            socket.emit('changeMap', { map: currentMap, x: players[myId].x, y: players[myId].y });
+            endBattle();
+        } else {
+            battleMessage.innerText = `${defender.name} fainted!`;
+            setTimeout(() => {
+                showPokemonSwitch(true); // Force switch
+            }, 1500);
+        }
     } else {
-        turnActionLocked = false; // Player can act again
+        // If it's a double battle, let the other wild pokemon attack if they haven't yet, otherwise unlock turn
+        // For simplicity, we just unlock after 1 attack for now to prevent stunlocks
+        turnActionLocked = false;
     }
 }
 
@@ -1065,6 +1373,7 @@ function awardExp() {
         activePokemon.def += 2;
 
         setTimeout(() => {
+            sfx.levelUp();
             battleMessage.innerText = `${activePokemon.name} grew to level ${activePokemon.level}!`;
 
             // Check Evolution
@@ -1139,6 +1448,26 @@ document.getElementById('btn-buy-pokeball').addEventListener('click', () => {
         alert('Not enough money!');
     }
 });
+document.getElementById('btn-buy-greatball').addEventListener('click', () => {
+    if (myMoney >= 300) {
+        myMoney -= 300;
+        myInventory.greatball += 1;
+        updateMyUI();
+        alert('Bought a Greatball!');
+    } else {
+        alert('Not enough money!');
+    }
+});
+document.getElementById('btn-buy-ultraball').addEventListener('click', () => {
+    if (myMoney >= 600) {
+        myMoney -= 600;
+        myInventory.ultraball += 1;
+        updateMyUI();
+        alert('Bought an Ultraball!');
+    } else {
+        alert('Not enough money!');
+    }
+});
 document.getElementById('btn-buy-potion').addEventListener('click', () => {
     if (myMoney >= 50) {
         myMoney -= 50;
@@ -1170,8 +1499,129 @@ document.getElementById('btn-close-shop').addEventListener('click', () => {
 document.getElementById('btn-fight').addEventListener('click', () => processTurn('fight'));
 document.getElementById('btn-item').addEventListener('click', () => processTurn('potion'));
 document.getElementById('btn-item-super').addEventListener('click', () => processTurn('superpotion'));
-document.getElementById('btn-catch').addEventListener('click', () => processTurn('catch'));
+const bagSwitchContainer = document.getElementById('bag-switch-container');
+const bagList = document.getElementById('bag-list');
+
+document.getElementById('btn-catch').addEventListener('click', () => {
+    if (!inBattle || turnActionLocked) return;
+
+    bagList.innerHTML = '';
+    const balls = [
+        { id: 'pokeball', name: 'Pokeball', count: myInventory.pokeball },
+        { id: 'greatball', name: 'Greatball', count: myInventory.greatball },
+        { id: 'ultraball', name: 'Ultraball', count: myInventory.ultraball },
+        { id: 'masterball', name: 'Masterball', count: myInventory.masterball }
+    ];
+
+    balls.forEach(ball => {
+        const btn = document.createElement('button');
+        btn.style.display = 'block';
+        btn.style.width = '200px';
+        btn.style.margin = '5px 0';
+        btn.style.padding = '10px';
+        btn.style.textAlign = 'left';
+        btn.innerText = `${ball.name} (x${ball.count})`;
+
+        if (ball.count === 0) {
+            btn.disabled = true;
+            btn.style.backgroundColor = '#ccc';
+        }
+
+        btn.addEventListener('click', () => {
+            bagSwitchContainer.style.display = 'none';
+            processTurn('catch_' + ball.id);
+        });
+
+        bagList.appendChild(btn);
+    });
+
+    bagSwitchContainer.style.display = 'block';
+});
+
+document.getElementById('btn-cancel-bag').addEventListener('click', () => {
+    bagSwitchContainer.style.display = 'none';
+});
 document.getElementById('btn-run').addEventListener('click', () => processTurn('run'));
+
+// Pokemon Switching UI
+const pokemonSwitchContainer = document.getElementById('pokemon-switch-container');
+const pokemonList = document.getElementById('pokemon-list');
+let isForcedSwitch = false;
+
+document.getElementById('btn-pokemon').addEventListener('click', () => {
+    if (!inBattle || turnActionLocked) return;
+    showPokemonSwitch(false);
+});
+
+document.getElementById('btn-cancel-switch').addEventListener('click', () => {
+    if (isForcedSwitch) {
+        alert("You must choose a Pokemon to continue fighting!");
+        return;
+    }
+    pokemonSwitchContainer.style.display = 'none';
+});
+
+function showPokemonSwitch(forced) {
+    isForcedSwitch = forced;
+    pokemonList.innerHTML = '';
+
+    myTeam.forEach((poke, index) => {
+        const btn = document.createElement('button');
+        btn.style.display = 'block';
+        btn.style.width = '200px';
+        btn.style.margin = '5px 0';
+        btn.style.padding = '10px';
+        btn.style.textAlign = 'left';
+
+        let label = `${poke.name} (Lv.${poke.level}) - HP: ${poke.hp}/${poke.maxHp}`;
+        if (poke.hp <= 0) {
+            label += " (FNT)";
+            btn.disabled = true;
+            btn.style.backgroundColor = '#ffcccc';
+        } else if (poke === activePokemon && !forced) {
+            label += " (ACTIVE)";
+            btn.disabled = true;
+            btn.style.backgroundColor = '#ccffcc';
+        }
+
+        btn.innerText = label;
+
+        btn.addEventListener('click', () => {
+            switchPokemon(index);
+        });
+
+        pokemonList.appendChild(btn);
+    });
+
+    document.getElementById('btn-cancel-switch').style.display = forced ? 'none' : 'inline-block';
+    pokemonSwitchContainer.style.display = 'block';
+}
+
+function switchPokemon(index) {
+    if (myTeam[index].hp <= 0 || myTeam[index] === activePokemon) return;
+
+    activePokemon = myTeam[index];
+    pokemonSwitchContainer.style.display = 'none';
+    updateBattleUI();
+
+    turnActionLocked = true;
+    battleMessage.innerText = `Go! ${activePokemon.name}!`;
+
+    // Play enter animation
+    const playerImg = document.getElementById('player-sprite');
+    playerImg.style.animation = 'none';
+    void playerImg.offsetWidth;
+    playerImg.style.animation = 'slideInBottom 0.5s ease-out';
+
+    if (isForcedSwitch) {
+        // Player was forced to switch because their active fainted
+        isForcedSwitch = false;
+        turnActionLocked = false;
+    } else {
+        // Player chose to switch instead of attacking, opponent gets to attack
+        setTimeout(wildAttack, 1500);
+    }
+}
 
 // Input
 const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowLeft: false, ArrowDown: false, ArrowRight: false };
@@ -1179,7 +1629,144 @@ const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowLeft
 window.addEventListener('keydown', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = true; });
 window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
 
+// --- PC Box System ---
+let inPC = false;
+const pcContainer = document.getElementById('pc-container');
+const pcPartyList = document.getElementById('pc-party-list');
+const pcBoxList = document.getElementById('pc-box-list');
+const pcMessage = document.getElementById('pc-message');
+let selectedForPC = null; // {source: 'party'|'box', index: number}
+
+document.getElementById('btn-close-pc').addEventListener('click', () => {
+    inPC = false;
+    pcContainer.style.display = 'none';
+    players[myId].y += 15; // push away slightly
+});
+
+function renderPC() {
+    pcPartyList.innerHTML = '';
+    pcBoxList.innerHTML = '';
+
+    myTeam.forEach((p, idx) => {
+        const div = document.createElement('div');
+        div.style.padding = '5px';
+        div.style.margin = '5px 0';
+        div.style.border = '1px solid white';
+        div.style.cursor = 'pointer';
+        div.style.background = (selectedForPC && selectedForPC.source === 'party' && selectedForPC.index === idx) ? '#555' : 'transparent';
+        div.innerText = `${p.name} (Lv.${p.level})`;
+        div.onclick = () => handlePCClick('party', idx);
+        pcPartyList.appendChild(div);
+    });
+
+    myBox.forEach((p, idx) => {
+        const div = document.createElement('div');
+        div.style.padding = '5px';
+        div.style.margin = '5px 0';
+        div.style.border = '1px solid white';
+        div.style.cursor = 'pointer';
+        div.style.background = (selectedForPC && selectedForPC.source === 'box' && selectedForPC.index === idx) ? '#555' : 'transparent';
+        div.innerText = `${p.name} (Lv.${p.level})`;
+        div.onclick = () => handlePCClick('box', idx);
+        pcBoxList.appendChild(div);
+    });
+}
+
+function handlePCClick(source, idx) {
+    if (!selectedForPC) {
+        selectedForPC = { source, index: idx };
+        pcMessage.innerText = "Select a slot to swap with or move to.";
+        renderPC();
+        return;
+    }
+
+    // Moving from party to box
+    if (selectedForPC.source === 'party' && source === 'box') {
+        if (myTeam.length <= 1) {
+            pcMessage.innerText = "You must have at least one Pokemon in your party!";
+        } else {
+            const pkmn = myTeam.splice(selectedForPC.index, 1)[0];
+            myBox.push(pkmn);
+            pcMessage.innerText = `Moved ${pkmn.name} to PC.`;
+        }
+    }
+    // Moving from box to party
+    else if (selectedForPC.source === 'box' && source === 'party') {
+        if (myTeam.length >= 6) {
+            // Swap
+            const fromBox = myBox.splice(selectedForPC.index, 1)[0];
+            const fromParty = myTeam.splice(idx, 1, fromBox)[0];
+            myBox.push(fromParty);
+            pcMessage.innerText = `Swapped ${fromParty.name} for ${fromBox.name}.`;
+        } else {
+            // Just move
+            const pkmn = myBox.splice(selectedForPC.index, 1)[0];
+            myTeam.push(pkmn);
+            pcMessage.innerText = `Moved ${pkmn.name} to Party.`;
+        }
+    }
+    // Swap within same list (optional polish)
+    else if (selectedForPC.source === source) {
+        const list = source === 'party' ? myTeam : myBox;
+        const temp = list[selectedForPC.index];
+        list[selectedForPC.index] = list[idx];
+        list[idx] = temp;
+        pcMessage.innerText = "Order swapped.";
+    }
+
+    selectedForPC = null;
+    renderPC();
+}
+
+function saveGameState() {
+    if (!myId || !players[myId]) return;
+    const p = players[myId];
+    socket.emit('saveGameState', {
+        x: p.x,
+        y: p.y,
+        color: p.color,
+        level: p.level,
+        exp: p.exp,
+        map: p.map || currentMap,
+        myMoney: myMoney,
+        myBadges: myBadges,
+        myInventory: myInventory,
+        myTeam: myTeam,
+        myBox: myBox,
+        defeatedTrainers: defeatedTrainers
+    });
+}
+
+// Periodically save
+setInterval(saveGameState, 5000);
+
 // --- Lobby Logic ---
+loginBtn.addEventListener('click', () => {
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+    if (username && password) {
+        myUsername = username;
+        socket.emit('login', { username, password });
+    } else {
+        lobbyMessage.innerText = 'Please enter username and password';
+    }
+});
+
+socket.on('loginSuccess', (playerData) => {
+    // Load data from server
+    myMoney = playerData.myMoney || 300;
+    myBadges = playerData.myBadges || 0;
+    myInventory = playerData.myInventory || { potion: 3, superPotion: 0, pokeball: 5, greatball: 0, ultraball: 0, masterball: 0 };
+    myTeam = playerData.myTeam || [];
+    myBox = playerData.myBox || [];
+    defeatedTrainers = playerData.defeatedTrainers || {};
+
+    loginForm.style.display = 'none';
+    roomControls.style.display = 'block';
+    welcomeName.innerText = myUsername;
+    lobbyMessage.innerText = 'Login successful!';
+});
+
 createRoomBtn.addEventListener('click', () => socket.emit('createRoom'));
 joinRoomBtn.addEventListener('click', () => {
     const roomId = roomInput.value.trim();
@@ -1284,8 +1871,11 @@ function loadMap(mapName) {
     else if (mapName === 'town2') buildTown2();
     else if (mapName === 'route2') buildRoute2();
     else if (mapName === 'town3') buildTown3();
+    else if (mapName === 'route3') buildRoute3();
+    else if (mapName === 'town4') buildTown4();
     else if (mapName === 'gym') buildGymMap();
     else if (mapName === 'gym2') buildGym2();
+    else if (mapName === 'gym3') buildGym3();
     else if (mapName === 'rock_dungeon') buildRockDungeon();
     else if (mapName === 'water_dungeon') buildWaterDungeon();
     else buildTown1(); // default
@@ -1308,6 +1898,9 @@ function updateMyUI() {
         document.getElementById('potionDisplay').innerText = myInventory.potion;
         document.getElementById('superPotionDisplay').innerText = myInventory.superPotion;
         document.getElementById('pokeballDisplay').innerText = myInventory.pokeball;
+        document.getElementById('greatballDisplay').innerText = myInventory.greatball;
+        document.getElementById('ultraballDisplay').innerText = myInventory.ultraball;
+        document.getElementById('masterballDisplay').innerText = myInventory.masterball;
     }
 }
 
@@ -1370,27 +1963,41 @@ function animate() {
             me.walkFrame = (me.walkFrame || 0) + 0.2;
             socket.emit('playerMovement', { x: me.x, y: me.y });
 
-            // Shop Collision Check
-            let shopCollision = false;
+            // Interactable Buildings Check (Shop, Center)
+            let interacting = false;
             for (const obj of mapObjects) {
-                if (obj.isShop) {
+                if (obj.isShop || obj.type === 'center') {
                     const hx = obj.x + TILE_SIZE;
                     const hy = obj.y + TILE_SIZE;
                     const dx = me.x - hx;
                     const dy = me.y - hy;
-                    if (dx*dx + dy*dy < 1200) { // ~34 pixel radius interaction
-                        shopCollision = true;
-                        if (!inShop) {
+                    if (dx*dx + dy*dy < 1200) { // Interaction radius
+                        interacting = true;
+                        if (obj.isShop && !inShop) {
                             inShop = true;
                             document.getElementById('shop-container').style.display = 'block';
+                        } else if (obj.type === 'center' && !inPC) {
+                            inPC = true;
+                            // Heal team automatically
+                            myTeam.forEach(p => p.hp = p.maxHp);
+                            sfx.heal();
+                            pcMessage.innerText = "Welcome! We have healed your Pokemon.";
+                            document.getElementById('pc-container').style.display = 'block';
+                            renderPC();
                         }
                         break;
                     }
                 }
             }
-            if (!shopCollision && inShop) {
-                inShop = false;
-                document.getElementById('shop-container').style.display = 'none';
+            if (!interacting) {
+                if (inShop) {
+                    inShop = false;
+                    document.getElementById('shop-container').style.display = 'none';
+                }
+                if (inPC) {
+                    inPC = false;
+                    document.getElementById('pc-container').style.display = 'none';
+                }
             }
 
             // Encounter check using battleZones array
