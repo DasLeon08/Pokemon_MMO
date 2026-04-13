@@ -7,9 +7,18 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Retro Scanlines Overlay -->
+    <div id="crt-overlay"></div>
+
     <div id="lobby-container">
-        <h1>Pokemon MMO</h1>
-        <div class="lobby-controls">
+        <h1><span style="color:#FFDE00; text-shadow: 2px 2px 0 #3B4CCA, -2px -2px 0 #3B4CCA, 2px -2px 0 #3B4CCA, -2px 2px 0 #3B4CCA;">POKEMON</span><br><span style="color:white; font-size: 16px;">MMO ONLINE</span></h1>
+        <div class="lobby-controls" id="loginForm">
+            <input type="text" id="usernameInput" placeholder="Username"><br><br>
+            <input type="password" id="passwordInput" placeholder="Password"><br><br>
+            <button id="loginBtn">Login / Register</button>
+        </div>
+        <div class="lobby-controls" id="roomControls" style="display:none;">
+            <p>Welcome, <span id="welcomeName"></span>!</p>
             <button id="createRoomBtn">Create Room</button>
             <br><br>
             <input type="text" id="roomInput" placeholder="Room ID">
@@ -21,25 +30,150 @@
     <div id="game-container" style="display: none; position: relative; width: 800px; height: 600px;">
         <div id="ui-overlay" style="display: none;">
             <div id="playerStats">
-                Level: <span id="levelDisplay">1</span> | Exp: <span id="expDisplay">0</span>/<span id="expNeededDisplay">100</span>
+                <div>Level: <span id="levelDisplay">1</span> | Exp: <span id="expDisplay">0</span>/<span id="expNeededDisplay">100</span></div>
+                <div style="margin-top: 5px;">Badges: <span id="badgeDisplay">0</span> | Money: $<span id="moneyDisplay">300</span></div>
+                <div style="margin-top: 5px;">
+                    Potions: <span id="potionDisplay">3</span> | Super: <span id="superPotionDisplay">0</span>
+                </div>
+                <div style="margin-top: 5px;">
+                    PB: <span id="pokeballDisplay">5</span> |
+                    GB: <span id="greatballDisplay">0</span> |
+                    UB: <span id="ultraballDisplay">0</span> |
+                    MB: <span id="masterballDisplay">0</span>
+                </div>
             </div>
-            <button id="gainExpBtn">Gain EXP!</button>
         </div>
+
+        <!-- PC Box Modal -->
+        <div id="pc-container" style="display: none; background: rgba(0,0,0,0.9); padding: 20px; border: 4px solid #fff; position: absolute; top: 5%; left: 10%; width: 80%; height: 80%; z-index: 30; color: white;">
+            <h2>PC System</h2>
+            <div style="display: flex; gap: 20px; height: calc(100% - 80px);">
+                <div style="flex: 1; border: 2px solid #aaa; padding: 10px; overflow-y: auto;">
+                    <h3>Your Party (Max 6)</h3>
+                    <div id="pc-party-list"></div>
+                </div>
+                <div style="flex: 1; border: 2px solid #aaa; padding: 10px; overflow-y: auto;">
+                    <h3>PC Box</h3>
+                    <div id="pc-box-list"></div>
+                </div>
+            </div>
+            <div style="margin-top: 10px; text-align: center;">
+                <p id="pc-message" style="color: yellow; min-height: 20px;"></p>
+                <button id="btn-close-pc">Log Off</button>
+            </div>
+        </div>
+
+        <!-- Shop Modal -->
+        <div id="shop-container" style="display: none;">
+            <h2>Pokemart</h2>
+            <p>Welcome! We sell items to help your Pokemon.</p>
+            <div class="shop-item">
+                <span>Pokeball ($100)</span>
+                <button id="btn-buy-pokeball">Buy</button>
+            </div>
+            <div class="shop-item">
+                <span>Greatball ($300)</span>
+                <button id="btn-buy-greatball">Buy</button>
+            </div>
+            <div class="shop-item">
+                <span>Ultraball ($600)</span>
+                <button id="btn-buy-ultraball">Buy</button>
+            </div>
+            <div class="shop-item">
+                <span>Potion ($50)</span>
+                <button id="btn-buy-potion">Buy</button>
+            </div>
+            <div class="shop-item">
+                <span>Super Potion ($150)</span>
+                <button id="btn-buy-superpotion">Buy</button>
+            </div>
+            <br>
+            <button id="btn-close-shop">Leave Shop</button>
+        </div>
+
         <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="battle-container" style="display: none;">
+            <div id="battle-scene">
+                <div class="battle-ground" id="wild-ground"></div>
+                <div class="battle-ground" id="player-ground"></div>
+
+                <!-- Wild 1 -->
+                <div class="health-box" id="wild-health">
+                    <div>
+                        <span id="wild-name">Wild Pokemon</span>
+                        <span id="wild-lvl">Lv.5</span>
+                    </div>
+                    <div class="hp-row"><span class="hp-label">HP</span><div class="hp-bar"><div class="hp-fill" id="wild-hp-fill"></div></div></div>
+                </div>
+                <img id="wild-sprite" src="" alt="Wild Pokemon" style="position: absolute; right: 80px; top: 30px; width: 150px; z-index: 2;">
+
+                <!-- Wild 2 (for 2v2) -->
+                <div class="health-box" id="wild-health-2" style="display: none; top: 10px; right: 280px;">
+                    <div>
+                        <span id="wild-name-2">Wild Pokemon</span>
+                        <span id="wild-lvl-2">Lv.5</span>
+                    </div>
+                    <div class="hp-row"><span class="hp-label">HP</span><div class="hp-bar"><div class="hp-fill" id="wild-hp-fill-2"></div></div></div>
+                </div>
+                <img id="wild-sprite-2" src="" alt="Wild Pokemon 2" style="display: none; position: absolute; right: 240px; top: 10px; width: 120px; z-index: 1;">
+
+                <!-- Player 1 -->
+                <img id="player-sprite" src="" alt="Your Pokemon" style="position: absolute; left: 80px; bottom: 100px; width: 180px; z-index: 3;">
+                <div class="health-box" id="player-health">
+                    <div>
+                        <span id="player-name">Your Pokemon</span>
+                        <span id="player-lvl">Lv.5</span>
+                    </div>
+                    <div class="hp-row"><span class="hp-label">HP</span><div class="hp-bar"><div class="hp-fill" id="player-hp-fill"></div></div></div>
+                    <div id="player-hp-text" style="font-size: 12px; margin-top: 5px; text-align: right; font-weight: bold;">20/ 20</div>
+                </div>
+
+                <!-- Player 2 (for 2v2) -->
+                <img id="player-sprite-2" src="" alt="Your Pokemon 2" style="display: none; position: absolute; left: 240px; bottom: 140px; width: 140px; z-index: 2;">
+                <div class="health-box" id="player-health-2" style="display: none; bottom: 10px; left: 280px;">
+                    <div>
+                        <span id="player-name-2">Your Pokemon</span>
+                        <span id="player-lvl-2">Lv.5</span>
+                    </div>
+                    <div class="hp-row"><span class="hp-label">HP</span><div class="hp-bar"><div class="hp-fill" id="player-hp-fill-2"></div></div></div>
+                    <div id="player-hp-text-2" style="font-size: 12px; margin-top: 5px; text-align: right; font-weight: bold;">20/ 20</div>
+                </div>
+            </div>
+            <div id="battle-menu">
+                <div id="battle-message">A wild Pokemon appeared!</div>
+                <div id="battle-actions">
+                    <button id="btn-fight">Fight</button>
+                    <button id="btn-pokemon">Pokemon</button>
+                    <button id="btn-item">Potion (<span id="btn-potion-count">3</span>)</button>
+                    <button id="btn-item-super">S. Potion (<span id="btn-superpotion-count">0</span>)</button>
+                    <button id="btn-catch">Bag</button>
+                    <button id="btn-run">Run</button>
+                </div>
+            </div>
+            <!-- Bag Switch Overlay -->
+            <div id="bag-switch-container" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10;">
+                <div style="color: white; padding: 20px;">
+                    <h2>Bag - Select an Item</h2>
+                    <div id="bag-list"></div>
+                    <button id="btn-cancel-bag" style="margin-top: 10px;">Cancel</button>
+                </div>
+            </div>
+            <!-- Pokemon Switch Overlay -->
+            <div id="pokemon-switch-container" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10;">
+                <div style="color: white; padding: 20px;">
+                    <h2>Select a Pokemon</h2>
+                    <div id="pokemon-list"></div>
+                    <button id="btn-cancel-switch" style="margin-top: 10px;">Cancel</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Import maps polyfill -->
-    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-        }
-      }
-    </script>
-
     <script src="/socket.io/socket.io.js"></script>
-    <script type="module" src="game.js"></script>
+    <script src="pokemon.js"></script>
+    <script src="collisions.js"></script>
+    <script src="battleZones.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>

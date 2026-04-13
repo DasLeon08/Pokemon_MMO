@@ -4,10 +4,31 @@ const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
+const fs = require('fs');
 
 app.use(express.static('public'));
 
 const rooms = {};
+const USERS_FILE = 'users.json';
+
+// Load users from disk
+let users = {};
+try {
+  if (fs.existsSync(USERS_FILE)) {
+    const data = fs.readFileSync(USERS_FILE, 'utf8');
+    users = JSON.parse(data);
+  }
+} catch (e) {
+  console.error('Error loading users.json', e);
+}
+
+function saveUsers() {
+  try {
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  } catch (e) {
+    console.error('Error saving users.json', e);
+  }
+}
 
 function generateRoomId() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -16,7 +37,58 @@ function generateRoomId() {
 io.on('connection', (socket) => {
   console.log('a user connected:', socket.id);
 
+  // Simple auth: register or login by username and password
+  socket.on('login', (data) => {
+    const { username, password } = data;
+    if (!username || !password) {
+      socket.emit('error', 'Username and password required');
+      return;
+    }
+
+    if (!users[username]) {
+      // Register new user
+      users[username] = {
+        password: password, // In a real app, hash this!
+        playerData: {
+          x: 100,
+          y: 100,
+          color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
+          level: 1,
+          exp: 0,
+          map: 'town1',
+          myMoney: 300,
+          myBadges: 0,
+          myInventory: { potion: 3, superPotion: 0, pokeball: 5, greatball: 0, ultraball: 0, masterball: 0 },
+          myTeam: [],
+          myBox: [],
+          defeatedTrainers: {}
+        }
+      };
+      saveUsers();
+    } else if (users[username].password !== password) {
+      socket.emit('error', 'Invalid password');
+      return;
+    }
+
+    // Attach username to socket
+    socket.username = username;
+    socket.emit('loginSuccess', users[username].playerData);
+  });
+
+  // Save game state sent from client periodically
+  socket.on('saveGameState', (playerData) => {
+    if (socket.username && users[socket.username]) {
+      // Don't overwrite password
+      users[socket.username].playerData = playerData;
+      saveUsers();
+    }
+  });
+
   socket.on('createRoom', () => {
+    if (!socket.username) {
+        socket.emit('error', 'You must be logged in to play.');
+        return;
+    }
     const roomId = generateRoomId();
     rooms[roomId] = {
       players: {}
@@ -24,15 +96,17 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     socket.roomId = roomId;
 
-    // Initialize new player
+    // Initialize new player from saved data
+    const pData = users[socket.username].playerData;
     rooms[roomId].players[socket.id] = {
-      x: 100,
-      y: 100,
-      color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
+      x: pData.x || 100,
+      y: pData.y || 100,
+      color: pData.color || ('#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')),
       id: socket.id,
-      level: 1,
-      exp: 0,
-      map: 'city'
+      username: socket.username,
+      level: pData.level || 1,
+      exp: pData.exp || 0,
+      map: pData.map || 'town1'
     };
 
     socket.emit('roomCreated', roomId);
@@ -45,15 +119,22 @@ io.on('connection', (socket) => {
       socket.join(roomId);
       socket.roomId = roomId;
 
-      // Initialize new player
+      if (!socket.username) {
+          socket.emit('error', 'You must be logged in to play.');
+          return;
+      }
+
+      // Initialize new player from saved data
+      const pData = users[socket.username].playerData;
       rooms[roomId].players[socket.id] = {
-        x: Math.floor(Math.random() * 500) + 50,
-        y: Math.floor(Math.random() * 500) + 50,
-        color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
+        x: pData.x || (Math.floor(Math.random() * 500) + 50),
+        y: pData.y || (Math.floor(Math.random() * 500) + 50),
+        color: pData.color || ('#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')),
         id: socket.id,
-        level: 1,
-        exp: 0,
-        map: 'city'
+        username: socket.username,
+        level: pData.level || 1,
+        exp: pData.exp || 0,
+        map: pData.map || 'town1'
       };
 
       socket.emit('roomJoined', roomId);

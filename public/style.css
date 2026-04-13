@@ -10,41 +10,71 @@ body {
     font-family: 'Press Start 2P', monospace, sans-serif;
 }
 
+/* CRT Scanline Overlay */
+#crt-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 4px, 6px 100%;
+    z-index: 9999;
+    pointer-events: none;
+}
+
 #lobby-container {
-    background-color: #f8f8f8;
-    border: 4px solid #333;
-    border-radius: 8px;
+    background-color: #f8e8c8;
+    border: 8px solid #686050;
+    border-radius: 16px;
     padding: 40px;
     text-align: center;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.5), inset 0 0 0 4px #fff;
+    color: #404040;
+    text-shadow: 1px 1px 0 #fff;
+    z-index: 100;
 }
 
 #lobby-container h1 {
-    color: #cc0000;
     margin-top: 0;
-    text-shadow: 2px 2px #ffcccc;
+    margin-bottom: 30px;
+    line-height: 1.5;
 }
 
 .lobby-controls button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: 2px solid #333;
+    background-color: white;
+    color: #404040;
+    padding: 12px 24px;
+    border: 4px solid #686050;
+    border-radius: 8px;
     cursor: pointer;
     font-family: inherit;
-    font-size: 16px;
-    margin: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    margin: 10px;
+    box-shadow: 4px 4px 0 #b8b0a0;
+    text-transform: uppercase;
 }
 
 .lobby-controls button:hover {
-    background-color: #45a049;
+    background-color: #e8e8e8;
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 #b8b0a0;
+}
+
+.lobby-controls button:active {
+    transform: translate(4px, 4px);
+    box-shadow: none;
 }
 
 .lobby-controls input {
-    padding: 10px;
-    font-size: 16px;
-    border: 2px solid #ccc;
+    padding: 12px;
+    font-size: 14px;
+    border: 4px solid #686050;
+    border-radius: 8px;
     font-family: inherit;
+    text-align: center;
+    background-color: #fff;
 }
 
 #lobbyMessage {
@@ -70,30 +100,522 @@ canvas {
     top: 20px;
     left: 20px;
     z-index: 10;
-    color: white;
-    text-shadow: 1px 1px 0 #000;
+    color: #404040; /* Darker text for paper look */
+    text-shadow: 1px 1px 0 #fff; /* White glow to stand out against paper */
 }
 
 #playerStats {
-    background: rgba(0, 0, 0, 0.6);
-    padding: 10px;
-    border: 2px solid white;
-    border-radius: 5px;
+    background: #f8e8c8; /* GBA text box color */
+    padding: 15px 20px;
+    border: 4px solid #686050;
+    border-radius: 12px;
     margin-bottom: 10px;
     font-size: 12px;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5), inset 0px 0px 0px 2px #fff;
+    line-height: 1.8;
+    font-weight: bold;
 }
 
-#gainExpBtn {
-    background-color: #f44336;
-    color: white;
+/* PC Box Modal Makeover */
+#pc-container {
+    background: #f8e8c8 !important;
+    color: #404040 !important;
+    border: 6px solid #686050 !important;
+    border-radius: 12px;
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.5), inset 0px 0px 0px 4px #fff !important;
+    text-shadow: 1px 1px 0 #fff;
+}
+
+#pc-container h2 {
+    color: #cc0000;
+    text-align: center;
+    margin-top: 0;
+    text-shadow: 2px 2px 0 #ffcccc;
+}
+
+#pc-container h3 {
+    margin-top: 0;
+    text-align: center;
+    border-bottom: 2px solid #686050;
+    padding-bottom: 10px;
+}
+
+#pc-container > div > div {
+    background: white;
+    border: 4px solid #686050 !important;
+    border-radius: 8px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+}
+
+#pc-container > div > div > div {
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+#pc-container > div > div > div:hover {
+    background-color: #f0f0f0;
+    border-color: #aaa !important;
+}
+
+#pc-message {
+    color: #cc0000 !important;
+    font-weight: bold;
+}
+
+#btn-close-pc {
+    background-color: white;
+    color: #404040;
     padding: 10px 15px;
-    border: 2px solid white;
+    border: 3px solid #686050;
+    border-radius: 6px;
     cursor: pointer;
     font-family: inherit;
-    font-size: 12px;
-    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 2px 2px 0 #b8b0a0;
 }
 
-#gainExpBtn:hover {
-    background-color: #da190b;
+#btn-close-pc:hover {
+    background-color: #e8e8e8;
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 #b8b0a0;
+}
+
+#battle-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 800px;
+    height: 600px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+    overflow: hidden;
+}
+
+/* Base Battle Scene with Animations */
+#battle-scene {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    border-bottom: 6px solid #484030;
+}
+
+/* Animated Backgrounds */
+#battle-scene::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: -2;
+    background-size: 200% 200%;
+}
+
+/* Scrolling sky/clouds for grass */
+#battle-container.bg-grass #battle-scene::before {
+    background: linear-gradient(to bottom, #78c8f8 0%, #b8e8f8 60%, #98d898 60%, #78c850 100%);
+    background-size: 100% 100%;
+}
+#battle-container.bg-grass #battle-scene::after {
+    content: '';
+    position: absolute;
+    top: 10%; left: 0; width: 200%; height: 30%;
+    background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.8) 20%, transparent 60%);
+    background-size: 300px 150px;
+    animation: moveClouds 40s linear infinite;
+    z-index: -1;
+    opacity: 0.6;
+}
+
+/* Wavy water */
+#battle-container.bg-water #battle-scene::before {
+    background: linear-gradient(to bottom, #68b0f8 0%, #88c8f8 40%, #3890f8 40%, #1868d8 100%);
+    background-size: 100% 200%;
+    animation: waterBob 8s ease-in-out infinite alternate;
+}
+
+/* Dark scrolling cave */
+#battle-container.bg-cave #battle-scene::before {
+    background: linear-gradient(to bottom, #484050 0%, #302830 50%, #585040 50%, #403830 100%);
+    background-size: 100% 100%;
+}
+#battle-container.bg-cave #battle-scene::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 0, rgba(0,0,0,0.1) 10px, transparent 10px, transparent 20px);
+    animation: moveClouds 20s linear infinite;
+    z-index: -1;
+}
+
+/* Sandstorm */
+#battle-container.bg-sand #battle-scene::before {
+    background: linear-gradient(to bottom, #d8b878 0%, #f0d8a8 45%, #c8a060 45%, #b08850 100%);
+    background-size: 100% 100%;
+}
+#battle-container.bg-sand #battle-scene::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 200%; bottom: 0;
+    background: repeating-linear-gradient(90deg, rgba(248, 208, 48, 0.2) 0%, transparent 5%, rgba(200, 160, 96, 0.2) 10%);
+    animation: sandstorm 2s linear infinite;
+    z-index: 1; /* Overlay on top of pokemon */
+    pointer-events: none;
+}
+
+@keyframes moveClouds {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@keyframes waterBob {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 0% 100%; }
+}
+
+@keyframes sandstorm {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-10%); }
+}
+
+/* Ground Ellipses for Pokémon to stand on */
+.battle-ground {
+    position: absolute;
+    border-radius: 50%;
+    z-index: -1;
+}
+
+#wild-ground {
+    top: 190px;
+    right: 80px;
+    width: 320px;
+    height: 100px;
+    background-color: rgba(0, 0, 0, 0.15);
+    border: 4px solid rgba(0, 0, 0, 0.05);
+}
+
+#player-ground {
+    bottom: 20px;
+    left: -40px;
+    width: 450px;
+    height: 140px;
+    background-color: rgba(0, 0, 0, 0.15);
+    border: 4px solid rgba(0, 0, 0, 0.05);
+}
+
+#battle-container.bg-grass .battle-ground { background-color: #a0d878; border-color: #88c860; }
+#battle-container.bg-water .battle-ground { background-color: #58a8f8; border-color: #4890d8; }
+#battle-container.bg-cave .battle-ground { background-color: #686050; border-color: #504840; }
+#battle-container.bg-sand .battle-ground { background-color: #d8b878; border-color: #c8a060; }
+
+
+#wild-sprite {
+    position: absolute;
+    top: 30px;
+    right: 140px;
+    width: 200px;
+    height: 200px;
+    image-rendering: pixelated;
+    z-index: 2;
+    transform-origin: bottom center;
+    animation: slideInDown 0.6s ease-out forwards, floatBob 3s ease-in-out infinite alternate;
+}
+
+#player-sprite {
+    position: absolute;
+    bottom: 40px;
+    left: 80px;
+    width: 220px;
+    height: 220px;
+    image-rendering: pixelated;
+    z-index: 2;
+    transform-origin: bottom center;
+    animation: slideInUp 0.6s ease-out forwards, floatBob 3s ease-in-out infinite alternate 1.5s;
+}
+
+@keyframes floatBob {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-10px); }
+}
+
+.health-box {
+    position: absolute;
+    background: #f8e8c8;
+    border: 4px solid #484030;
+    border-radius: 8px 16px;
+    padding: 10px 15px;
+    width: 280px;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.5), inset 0px 0px 0px 2px #fff;
+    color: #404040;
+    z-index: 10;
+}
+
+#wild-health {
+    top: 30px;
+    left: 40px;
+    border-radius: 0 16px 0 16px;
+    animation: slideInLeft 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+}
+
+#player-health {
+    bottom: 30px;
+    right: 40px;
+    border-radius: 16px 0 16px 0;
+    animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+}
+
+@keyframes slideInLeft {
+    0% { transform: translateX(-300px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+    0% { transform: translateX(300px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInUp {
+    0% { transform: translateY(300px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInDown {
+    0% { transform: translateY(-300px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+.health-box > div:first-child {
+    font-size: 16px;
+    margin-bottom: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.hp-row {
+    display: flex;
+    align-items: center;
+    background-color: #506858;
+    border-radius: 10px;
+    padding: 2px 4px;
+    border: 2px solid #e8e8e8;
+    box-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+
+.hp-label {
+    color: #f8d030;
+    font-size: 10px;
+    margin-right: 6px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+}
+
+.hp-bar {
+    flex: 1;
+    height: 8px;
+    background-color: #484030;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #282828;
+}
+
+.hp-fill {
+    height: 100%;
+    background-color: #58d854;
+    width: 100%;
+    transition: width 0.5s ease-out, background-color 0.5s ease-out;
+    border-radius: 2px;
+}
+
+#battle-menu {
+    height: 180px;
+    display: flex;
+    background-color: #f8e8c8;
+}
+
+#battle-message {
+    flex: 2;
+    border: 6px solid #686050;
+    border-radius: 12px;
+    margin: 15px;
+    padding: 25px;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1.8;
+    background-color: white;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.2), inset 0px 0px 0px 2px #e0e0e0;
+    color: #404040;
+    overflow-y: auto;
+}
+
+#battle-actions {
+    flex: 1.5;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-content: space-around;
+    margin: 15px 15px 15px 0;
+    padding: 10px;
+    background: white;
+    border: 6px solid #686050;
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+}
+
+#battle-actions button {
+    background-color: #f8f8f8;
+    color: #404040;
+    border: 3px solid #686050;
+    border-radius: 6px;
+    padding: 10px 5px;
+    margin: 2%;
+    width: 45%; /* 2 per row */
+    font-size: 12px;
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 #b8b0a0;
+    text-transform: uppercase;
+}
+
+#battle-actions button:hover {
+    background-color: #e8e8e8;
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 #b8b0a0;
+}
+
+#battle-actions button:active {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+}
+
+#shop-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    background-color: #f8e8c8;
+    border: 6px solid #686050;
+    border-radius: 12px;
+    padding: 30px;
+    z-index: 200;
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.5), inset 0px 0px 0px 4px #fff;
+    text-align: center;
+    color: #404040;
+    text-shadow: 1px 1px 0 #fff;
+    line-height: 1.5;
+}
+
+#shop-container h2 {
+    color: #cc0000;
+    margin-top: 0;
+    font-size: 24px;
+    text-shadow: 2px 2px 0 #ffcccc;
+}
+
+#shop-container p {
+    font-weight: bold;
+    margin-bottom: 25px;
+}
+
+.shop-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    border: 3px solid #686050;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 10px 0;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 2px 2px 0 #b8b0a0;
+}
+
+.shop-item button, #btn-close-shop {
+    background-color: white;
+    color: #404040;
+    padding: 10px 15px;
+    border: 3px solid #686050;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 2px 2px 0 #b8b0a0;
+}
+
+#btn-close-shop {
+    margin-top: 20px;
+}
+
+.shop-item button:hover, #btn-close-shop:hover {
+    background-color: #e8e8e8;
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 #b8b0a0;
+}
+
+.shop-item button:active, #btn-close-shop:active {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+}
+
+/* Modals inside battle overlay (Bag/Switch) */
+#bag-switch-container > div, #pokemon-switch-container > div {
+    background-color: #f8e8c8;
+    border: 6px solid #686050;
+    border-radius: 12px;
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.5), inset 0px 0px 0px 4px #fff;
+    width: 60%;
+    margin: 10% auto;
+    color: #404040 !important;
+    text-shadow: 1px 1px 0 #fff;
+}
+
+#bag-switch-container h2, #pokemon-switch-container h2 {
+    text-align: center;
+    border-bottom: 2px solid #686050;
+    padding-bottom: 10px;
+}
+
+#bag-list button, #pokemon-list button {
+    background-color: white;
+    color: #404040;
+    border: 3px solid #686050;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 2px 2px 0 #b8b0a0;
+    margin: 10px auto !important;
+    width: 90% !important;
+}
+
+#bag-list button:hover:not(:disabled), #pokemon-list button:hover:not(:disabled) {
+    background-color: #e8e8e8;
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 #b8b0a0;
+}
+
+#btn-cancel-bag, #btn-cancel-switch {
+    background-color: white;
+    color: #404040;
+    border: 3px solid #686050;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 2px 2px 0 #b8b0a0;
+    padding: 10px;
+    display: block;
+    margin: 20px auto 0 auto !important;
 }
